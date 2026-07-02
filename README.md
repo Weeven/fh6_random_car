@@ -1,8 +1,9 @@
 # FH6 Random Car
 
 > **Continuing this project with Claude?** `cd` into this folder, then run
-> `claude --continue`. (Exact copy-paste command with your local path is in
-> the `claude` folder's own README, kept out of this repo intentionally.)
+> `claude --continue`. (See `RESUME.md` in this same folder for the exact
+> copy-paste command — it's gitignored/local-only, kept out of this repo
+> intentionally since it contains your local file path.)
 
 A random car picker for **Forza Horizon 6**, built for streamers. Viewers
 spend Channel Points to trigger a random car change; the result appears as
