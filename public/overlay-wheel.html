@@ -6,16 +6,18 @@
 <link rel="stylesheet" href="overlay-wheel.css" />
 </head>
 <body>
-  <div id="wheelWrap">
-    <div id="pointer"></div>
-    <canvas id="wheel" width="480" height="480"></canvas>
-  </div>
+  <div id="stage">
+    <div id="card" class="hidden">
+      <div id="redeemedBy"></div>
+      <div id="carName">—</div>
+    </div>
+    <div id="empty" class="hidden">No cars match the current filters!</div>
 
-  <div id="card" class="hidden">
-    <div id="redeemedBy"></div>
-    <div id="carName">—</div>
+    <div id="wheelWrap">
+      <div id="pointer"></div>
+      <canvas id="wheel" width="480" height="480"></canvas>
+    </div>
   </div>
-  <div id="empty" class="hidden">No cars match the current filters!</div>
 
   <script src="overlay-wheel.js"></script>
 </body>

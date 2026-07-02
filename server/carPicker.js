@@ -227,6 +227,27 @@ function computeRandomSpin() {
   };
 }
 
+/**
+ * Samples computeRandomSpin() repeatedly to collect `count` distinct labels
+ * (excluding excludeLabel) — used to fill out the wheel overlay's decoy
+ * slots with the same variety of results a real spin could produce
+ * (manufacturer, decade, class, drivetrain, country, or combos), not just
+ * plain manufacturer names.
+ */
+function sampleRandomLabels(count, excludeLabel) {
+  const seen = new Set();
+  if (excludeLabel) seen.add(excludeLabel);
+  const labels = [];
+  const maxAttempts = count * 50 + 200;
+  for (let attempts = 0; labels.length < count && attempts < maxAttempts; attempts++) {
+    const { label } = computeRandomSpin();
+    if (!label || seen.has(label)) continue;
+    seen.add(label);
+    labels.push(label);
+  }
+  return labels;
+}
+
 function getFacetOptions() {
   const classes = new Set();
   const drivetrains = new Set();
@@ -339,6 +360,7 @@ module.exports = {
   applyFilters,
   computeSpinResult,
   computeRandomSpin,
+  sampleRandomLabels,
   getFacetOptions,
   resolveCommandToken,
   resolveChangeCarTitle,

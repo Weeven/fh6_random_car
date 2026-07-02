@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const { WebSocketServer } = require("ws");
 
-const { computeSpinResult, computeRandomSpin, getFacetOptions, resolveChangeCarTitle } = require("./carPicker");
+const { computeSpinResult, computeRandomSpin, sampleRandomLabels, getFacetOptions, resolveChangeCarTitle } = require("./carPicker");
 const { getFilters, setFilters } = require("./state");
 const { connectTwitchEventSub } = require("./twitchEventSub");
 const { connectTwitchChat } = require("./twitchChat");
@@ -47,6 +47,14 @@ app.post("/api/spin", (req, res) => {
 // it's only meant for whichever page just loaded, not every open overlay.
 app.get("/api/random-spin", (req, res) => {
   res.json(computeRandomSpin());
+});
+
+// Fills out the wheel overlay's decoy slots with the same variety of
+// results a real spin could produce (manufacturer, decade, class,
+// drivetrain, country, or combos) rather than one fixed dimension.
+app.get("/api/wheel-labels", (req, res) => {
+  const count = Math.max(0, parseInt(req.query.count, 10) || 19);
+  res.json({ labels: sampleRandomLabels(count, req.query.exclude || null) });
 });
 
 const server = app.listen(PORT, () => {

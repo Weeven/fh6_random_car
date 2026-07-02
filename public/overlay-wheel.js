@@ -13,33 +13,23 @@ const DISPLAY_DURATION_MS = 8000;
 
 let hideTimer = null;
 let currentRotation = 0;
-let facetManufacturers = [];
 
-async function loadFacets() {
-  try {
-    const facets = await fetch("/api/facets").then((r) => r.json());
-    facetManufacturers = facets.manufacturers || [];
-  } catch {
-    facetManufacturers = [];
-  }
-}
+// Pulls decoy slots from the server's same random-spin logic as the
+// overlay's own auto-random reveal — so the wheel shows the same variety of
+// possible results (manufacturer, decade, class, drivetrain, country, or
+// combos), not just manufacturer names.
+async function buildLabels(realLabel) {
+  const decoys = await fetch(
+    `/api/wheel-labels?count=${SLICE_COUNT - 1}&exclude=${encodeURIComponent(realLabel)}`
+  )
+    .then((r) => r.json())
+    .then((d) => d.labels || [])
+    .catch(() => []);
 
-// Picks 19 distinct decoy labels (manufacturer names) to fill out the wheel
-// alongside the real result — purely cosmetic, doesn't affect the outcome.
-function pickDecoys(realLabel, count) {
-  const pool = facetManufacturers.filter((m) => m !== realLabel);
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, count);
-}
-
-function buildLabels(realLabel) {
-  const decoys = pickDecoys(realLabel, SLICE_COUNT - 1);
   const winningIndex = Math.floor(Math.random() * SLICE_COUNT);
   const labels = [...decoys];
   labels.splice(winningIndex, 0, realLabel);
+  while (labels.length < SLICE_COUNT) labels.push("");
   return { labels, winningIndex };
 }
 
@@ -76,14 +66,14 @@ function drawWheel(labels) {
     ctx.save();
     ctx.translate(radius, radius);
     ctx.rotate(startAngle + sliceRad / 2);
-    ctx.textAlign = "left";
+    ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
     ctx.shadowColor = "rgba(0,0,0,0.9)";
     ctx.shadowBlur = 3;
-    const text = truncateForSlice(labels[i] || "", radius - 40);
-    ctx.fillText(text, 24, 0);
+    const text = truncateForSlice(labels[i] || "", radius - 60);
+    ctx.fillText(text, radius - 22, 0);
     ctx.restore();
   }
 }
@@ -118,7 +108,7 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 3000);
 }
 
-function handleSpinResult({ label, poolSize, redeemedBy }) {
+async function handleSpinResult({ label, poolSize, redeemedBy }) {
   clearTimeout(hideTimer);
 
   if (!label || poolSize === 0) {
@@ -134,7 +124,7 @@ function handleSpinResult({ label, poolSize, redeemedBy }) {
   card.classList.remove("show");
   redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun!` : "New spin!";
 
-  const { labels, winningIndex } = buildLabels(label);
+  const { labels, winningIndex } = await buildLabels(label);
   drawWheel(labels);
   spinTo(winningIndex);
 
@@ -149,7 +139,6 @@ function handleSpinResult({ label, poolSize, redeemedBy }) {
 }
 
 async function init() {
-  await loadFacets();
   connect();
 
   // Loading/refreshing this page (e.g. re-adding the OBS Browser Source, or
