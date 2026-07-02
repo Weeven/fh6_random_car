@@ -6,6 +6,18 @@ an animated card on an OBS overlay. You control which cars are in the pool
 (class, drivetrain, manufacturer, country, year range) from a simple control
 panel.
 
+## Live deployment
+
+This is hosted 24/7 on Render — nothing needs to run on any PC (yours or
+the streamer's) for normal use:
+
+- **OBS Browser Source URL:** `https://fh6-random-car.onrender.com/overlay.html`
+- **Control panel (private, not for viewers):** `https://fh6-random-car.onrender.com/control.html`
+
+The `npm start` / `localhost:8080` instructions below are only for **local
+development** on this codebase (testing a change before pushing it) — they
+don't apply to actually using the tool day-to-day.
+
 ## What's in here
 
 - `public/overlay.html` — add this as an **OBS Browser Source**. Transparent
@@ -23,7 +35,7 @@ panel.
 - `scripts/scrape_cars.js` — pulls the real, full FH6 car list (600+ cars)
   from a community database into `data/cars.json`. See below.
 
-## Quickstart
+## Quickstart (local development only)
 
 ```bash
 npm install
