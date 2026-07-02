@@ -191,7 +191,7 @@
     "name": "2554 AMG TRANSPORT DYNAMICS M12S WARTHOG CST",
     "manufacturer": "AMG TRANSPORT DYNAMICS",
     "country": "USA",
-    "year": 2554,
+    "year": null,
     "class": "A",
     "drivetrain": "AWD",
     "rarity": null,
@@ -1908,7 +1908,7 @@
     "manufacturer": "Ferrari",
     "country": "Italy",
     "year": 2018,
-    "class": "unknown",
+    "class": null,
     "drivetrain": "RWD",
     "rarity": null,
     "source": "Autoshow + Wheelspin"
@@ -4988,7 +4988,7 @@
     "manufacturer": "Nissan",
     "country": "Japan",
     "year": 1998,
-    "class": "unknown",
+    "class": null,
     "drivetrain": null,
     "rarity": null,
     "source": "Other"
@@ -5208,7 +5208,7 @@
     "manufacturer": "Peel",
     "country": "United Kingdom",
     "year": 1962,
-    "class": "unknown",
+    "class": null,
     "drivetrain": null,
     "rarity": null,
     "source": "Other"
@@ -6484,7 +6484,7 @@
     "manufacturer": "Toyota",
     "country": "Japan",
     "year": 2023,
-    "class": "unknown",
+    "class": null,
     "drivetrain": null,
     "rarity": null,
     "source": "Other"

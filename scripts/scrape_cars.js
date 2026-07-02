@@ -75,12 +75,20 @@ async function scrape() {
       if (!fullName || !currentManufacturer) return;
 
       const yearMatch = fullName.match(/^(\d{4})\s+(.*)$/);
-      const year = yearMatch ? parseInt(yearMatch[1], 10) : null;
+      // A handful of franchise-crossover cars (e.g. the Halo Warthog, titled
+      // "2554 AMG TRANSPORT DYNAMICS...") use an in-fiction year rather than
+      // a real one — clamp to a plausible real-world range so they don't
+      // pollute the year/decade filters with fake future decades.
+      const parsedYear = yearMatch ? parseInt(yearMatch[1], 10) : null;
+      const year = parsedYear && parsedYear >= 1900 && parsedYear <= new Date().getUTCFullYear() + 2 ? parsedYear : null;
 
       // First .car_tune block is the Stock tune — use it for class/drivetrain
       // so upgraded-tune variants elsewhere on the card don't get picked up.
+      // A few special/DLC cars are unrated on kudosprime and show "unknown"
+      // as the class — normalize that to null rather than a fake facet value.
       const stockTune = node.find(".car_tune").first();
-      const classLetter = stockTune.find(".pi").first().attr("class")?.replace("pi", "").trim() || null;
+      const rawClass = stockTune.find(".pi").first().attr("class")?.replace("pi", "").trim() || null;
+      const classLetter = rawClass && rawClass !== "unknown" ? rawClass : null;
       const drivetrain = stockTune.find(".tr").first().text().trim() || null;
 
       const source = node.find(".car_source b").first().text().trim() || null;
