@@ -95,16 +95,25 @@ the active filters pin down, and no more:
   `Volvo` and it shows "Volvo", even though they only have 1 car — you
   picked it on purpose.
 - **Two or more filters** — shown combined, e.g. `Nissan` + `Class A` shows
-  "Nissan · Class A". If that exact combination matches 2 or fewer cars, the
+  "Nissan · Class A". If that exact combination matches 5 or fewer cars, the
   reveal automatically drops the most-specific filter in the combo and
   rechecks, repeating until the pool is bigger than that (or only one filter
-  is left). E.g. `Nissan` + `Japan` + `Class D` might only match 0-1 cars, so
-  it'd back off to "Japan · Class D" instead.
+  is left). E.g. `Nissan` + `Japan` + `Class D` might only match a couple
+  cars, so it'd back off to "Japan · Class D" instead. This keeps every
+  reveal at more than 5 matching cars, so there's a decent chance whoever's
+  playing actually owns one.
 
 Each filter group (class, drivetrain, manufacturer, country, region, decade)
 is OR'd internally and AND'd across groups — e.g. selecting `RWD` + `AWD`
 for drivetrain and `Japan` for country matches anything Japanese that's RWD
 *or* AWD.
+
+**Refreshing/loading `overlay.html`** on its own (e.g. re-adding the OBS
+Browser Source) also reveals something random — independent of the control
+panel's saved filters, chat, and Channel Points. It's a random 0-2 filter
+combo each time (sometimes just a manufacturer, sometimes "Region · Decade",
+sometimes "Drivetrain · Country", etc.), broadened the same way if too
+narrow.
 
 ## Chat commands
 

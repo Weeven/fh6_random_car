@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const { WebSocketServer } = require("ws");
 
-const { computeSpinResult, getFacetOptions } = require("./carPicker");
+const { computeSpinResult, computeRandomSpin, getFacetOptions } = require("./carPicker");
 const { getFilters, setFilters } = require("./state");
 const { connectTwitchEventSub } = require("./twitchEventSub");
 const { connectTwitchChat } = require("./twitchChat");
@@ -40,6 +40,13 @@ app.post("/api/spin", (req, res) => {
   const result = computeSpinResult(getFilters());
   broadcastToOverlay(result);
   res.json(result);
+});
+
+// Called by the overlay page itself on load/refresh — a fully random combo,
+// independent of the control panel's saved filters. Not broadcast, since
+// it's only meant for whichever page just loaded, not every open overlay.
+app.get("/api/random-spin", (req, res) => {
+  res.json(computeRandomSpin());
 });
 
 const server = app.listen(PORT, () => {

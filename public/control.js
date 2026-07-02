@@ -74,6 +74,9 @@ async function refreshPoolCount() {
 }
 
 async function spinNow() {
+  // Always sync whatever's currently checked on screen first — otherwise a
+  // spin can silently use stale filters from the last time Save was clicked.
+  await saveFilters();
   await fetch("/api/spin", { method: "POST" });
 }
 

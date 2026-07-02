@@ -50,3 +50,11 @@ function handleSpinResult({ label, poolSize, redeemedBy }) {
 }
 
 connect();
+
+// Loading/refreshing this page (e.g. re-adding the OBS Browser Source, or
+// just opening it to check) reveals something random on its own — separate
+// from spins triggered by chat/Channel Points/the control panel.
+fetch("/api/random-spin")
+  .then((r) => r.json())
+  .then(handleSpinResult)
+  .catch(() => {});

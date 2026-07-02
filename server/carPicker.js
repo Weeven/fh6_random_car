@@ -66,7 +66,7 @@ function applyFilters(filters = {}) {
 
 const FILTER_KEYS = ["manufacturers", "decades", "classes", "drivetrains", "countries", "regions"];
 // Order dropped in when a combo is too narrow — most-specific/most-narrowing first.
-const MIN_POOL_SIZE = 3;
+const MIN_POOL_SIZE = 6; // reveals must match MORE than 5 cars — otherwise chat/the streamer may not own one
 
 function activeFilterKeys(filters) {
   return FILTER_KEYS.filter((key) => filters[key]?.length);
@@ -83,6 +83,38 @@ function labelForFilters(filters) {
   return parts.join(" · ");
 }
 
+function randomManufacturerResult() {
+  const manufacturers = [...new Set(cars.map((c) => c.manufacturer).filter(Boolean))];
+  const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
+  return { label: manufacturer, manufacturer, poolSize: cars.length, narrowed: false };
+}
+
+/**
+ * Drops filter dimensions (in FILTER_KEYS priority order, most-specific
+ * first) until the pool is bigger than MIN_POOL_SIZE - 1.
+ *
+ * keepAtLeastOneFilter=true preserves a single manually-chosen filter even
+ * if it's narrow (e.g. a user deliberately picking "Volvo" even though they
+ * only have 1 car) — used for the control-panel/chat spin. Set to false for
+ * fully machine-generated filter combos, which have no "deliberate choice"
+ * to protect and should broaden all the way down to nothing if needed.
+ */
+function broadenPool(filters, { keepAtLeastOneFilter }) {
+  let active = { ...filters };
+  let pool = applyFilters(active);
+
+  while (pool.length < MIN_POOL_SIZE) {
+    const remaining = activeFilterKeys(active);
+    if (remaining.length === 0) break;
+    if (keepAtLeastOneFilter && remaining.length <= 1) break;
+    const keyToDrop = FILTER_KEYS.find((key) => active[key]?.length);
+    active = { ...active, [keyToDrop]: [] };
+    pool = applyFilters(active);
+  }
+
+  return { active, pool };
+}
+
 /**
  * Reveals exactly as much as the active filters pin down — never a specific
  * car model. The idea: only show what was actually asked for, and roll dice
@@ -96,34 +128,67 @@ function labelForFilters(filters) {
  *                                 it on purpose, e.g. "Volvo" even if they
  *                                 only have 1 car)
  *   two or more filters        -> show them combined ("Nissan · Class A"),
- *                                 UNLESS that combo matches 2 or fewer cars —
- *                                 then drop the most-specific filter in the
- *                                 combo and recheck, repeating until the pool
- *                                 is bigger than that or only one filter is
- *                                 left (e.g. "Class D" + "Japan" + "Nissan"
+ *                                 UNLESS that combo matches MIN_POOL_SIZE-1
+ *                                 or fewer cars — then drop the most-specific
+ *                                 filter in the combo and recheck, repeating
+ *                                 until the pool is bigger or only one filter
+ *                                 is left (e.g. "Class D" + "Japan" + "Nissan"
  *                                 with ~1 match backs off to "Japan · Class D")
  */
 function computeSpinResult(filters = {}) {
-  let active = { ...filters };
-  let pool = applyFilters(active);
+  const { active, pool } = broadenPool(filters, { keepAtLeastOneFilter: true });
 
-  while (pool.length < MIN_POOL_SIZE && activeFilterKeys(active).length >= 2) {
-    const keyToDrop = FILTER_KEYS.find((key) => active[key]?.length);
-    active = { ...active, [keyToDrop]: [] };
-    pool = applyFilters(active);
-  }
-
-  if (isFilterEmpty(active)) {
-    const manufacturers = [...new Set(cars.map((c) => c.manufacturer).filter(Boolean))];
-    const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
-    return { label: manufacturer, manufacturer, poolSize: cars.length, narrowed: false };
-  }
+  if (isFilterEmpty(active)) return randomManufacturerResult();
 
   return {
     label: labelForFilters(active),
     manufacturer: active.manufacturers?.length === 1 ? active.manufacturers[0] : null,
     poolSize: pool.length,
     narrowed: activeFilterKeys(active).length < activeFilterKeys(filters).length,
+  };
+}
+
+/**
+ * Generates a fully random filter combo (0-2 random dimensions, e.g. "region
+ * + decade" or "drivetrain + country" or just one manufacturer) for the
+ * overlay's "refresh the page for something random" feature. Always broadens
+ * down to a bigger pool (or all the way to a random manufacturer) if the
+ * random combo turns out too narrow — there's no user intent to preserve
+ * here, unlike computeSpinResult.
+ */
+function computeRandomSpin() {
+  const facets = getFacetOptions();
+  const facetsByKey = {
+    manufacturers: facets.manufacturers,
+    decades: facets.decades,
+    classes: facets.classes,
+    drivetrains: facets.drivetrains,
+    countries: facets.countries,
+    regions: facets.regions,
+  };
+
+  const shuffledKeys = [...FILTER_KEYS];
+  for (let i = shuffledKeys.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledKeys[i], shuffledKeys[j]] = [shuffledKeys[j], shuffledKeys[i]];
+  }
+
+  const dimensionCount = Math.floor(Math.random() * 3); // 0, 1, or 2 dimensions
+  const filters = {};
+  for (const key of shuffledKeys.slice(0, dimensionCount)) {
+    const options = facetsByKey[key];
+    if (!options?.length) continue;
+    filters[key] = [options[Math.floor(Math.random() * options.length)]];
+  }
+
+  const { active, pool } = broadenPool(filters, { keepAtLeastOneFilter: false });
+  if (isFilterEmpty(active)) return randomManufacturerResult();
+
+  return {
+    label: labelForFilters(active),
+    manufacturer: active.manufacturers?.length === 1 ? active.manufacturers[0] : null,
+    poolSize: pool.length,
+    narrowed: true,
   };
 }
 
@@ -217,4 +282,12 @@ function resolveCommandToken(token) {
   return { filters: {}, matchedType: null };
 }
 
-module.exports = { loadCars, applyFilters, computeSpinResult, getFacetOptions, resolveCommandToken, isFilterEmpty };
+module.exports = {
+  loadCars,
+  applyFilters,
+  computeSpinResult,
+  computeRandomSpin,
+  getFacetOptions,
+  resolveCommandToken,
+  isFilterEmpty,
+};
