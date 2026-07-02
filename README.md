@@ -78,10 +78,13 @@ the schema in `data/cars.sample.json`:
 ## Wiring up Channel Points
 
 See [`setup/twitch_setup.md`](setup/twitch_setup.md) for the full walkthrough
-(registering a Twitch app, creating the reward, getting a token). Once
-`.env` is filled in, redemptions of your configured reward automatically
-trigger a spin using whatever filters are currently active in the control
-panel.
+(registering a Twitch app, creating rewards, getting a token). Once `.env`
+is filled in, create as many Channel Points rewards as you want directly in
+the Twitch dashboard, at whatever prices you like — no reward title goes in
+`.env`. Title each one **"Change Car"** (no filter) or **"Change Car:
+&lt;word&gt;"** (one filter, same words as the [chat commands](#chat-commands)
+below, e.g. "Change Car: Honda") and redeeming it triggers a spin
+automatically.
 
 ## How filtering works
 

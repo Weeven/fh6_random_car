@@ -4,13 +4,31 @@ This connects viewer Channel Points redemptions to your car randomizer. Skip
 this whole section if you only want the manual "Spin now" button in the
 control panel — that works with zero Twitch setup.
 
-## 1. Create the Channel Points reward
+## 1. Create your Channel Points reward(s)
 
 In your Twitch Creator Dashboard → **Viewer Rewards → Channel Points**,
-create a custom reward, e.g. titled **"Random Car Change"**. Note the exact
-title — you'll put it in `.env` as `TWITCH_REWARD_TITLE`. Skip auto-fulfill
-if you want to manually approve redemptions during raids/spam, though for a
-gameplay gimmick most streamers set it to auto-fulfill.
+create as many custom rewards as you want, at whatever prices you like —
+there's nothing to configure in `.env` for this, the server recognizes them
+purely by title:
+
+- **`Change Car`** — no filter, spins for any manufacturer. E.g. price this
+  low (your cheapest tier).
+- **`Change Car: <word>`** — one filter, using the exact same words as the
+  chat commands: a manufacturer (`Change Car: Honda`), country
+  (`Change Car: Japan`), class (`Change Car: Class A`), drivetrain
+  (`Change Car: RWD`), or decade (`Change Car: 90s`). Price these higher —
+  it's up to you per reward.
+
+Titles are matched case-insensitively, and a dash works instead of a colon
+too (`Change Car - Honda`). Any other reward you have on your channel for
+unrelated purposes is left alone — only titles starting with "Change Car"
+trigger a spin. Skip auto-fulfill on any of them if you want to manually
+approve redemptions during raids/spam, though for a gameplay gimmick most
+streamers set them to auto-fulfill.
+
+If a reward's title doesn't match a recognizable word after "Change Car:"
+(e.g. a typo), it still spins — just with no filter — rather than silently
+eating a viewer's paid redemption.
 
 ## 2. Register a Twitch application
 
@@ -96,5 +114,5 @@ npm start
 
 Add `http://localhost:8080/overlay.html` as an OBS Browser Source, and open
 `http://localhost:8080/control.html` in a normal browser tab to set filters.
-Redeem the reward from a viewer account (or a test/mod account) to confirm
-it triggers a spin on the overlay.
+Redeem one of your rewards from a viewer account (or a test/mod account) to
+confirm it triggers a spin on the overlay.

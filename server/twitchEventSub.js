@@ -5,13 +5,15 @@ const EVENTSUB_WS_URL = "wss://eventsub.wss.twitch.tv/ws";
 const HELIX_SUBSCRIPTIONS_URL = "https://api.twitch.tv/helix/eventsub/subscriptions";
 
 /**
- * Connects to Twitch EventSub over WebSocket and subscribes to
- * channel_points_custom_reward_redemption.add for the given reward title.
- * Calls onRedemption(redemptionEvent) whenever that specific reward is redeemed.
+ * Connects to Twitch EventSub over WebSocket and subscribes to ALL Channel
+ * Points custom reward redemptions on the channel. Calls
+ * onRedemption(redemptionEvent) for every one — it's up to the caller to
+ * decide (e.g. by parsing event.reward.title) which redemptions are actually
+ * ours vs. unrelated rewards the streamer has configured for other reasons.
  *
  * Docs: https://dev.twitch.tv/docs/eventsub/handling-eventsub-events/#subscribing-to-events
  */
-function connectTwitchEventSub({ clientId, accessToken, broadcasterId, rewardTitle, onRedemption, onStatus }) {
+function connectTwitchEventSub({ clientId, accessToken, broadcasterId, onRedemption, onStatus }) {
   function connect(url = EVENTSUB_WS_URL) {
     const ws = new WebSocket(url);
 
@@ -37,10 +39,7 @@ function connectTwitchEventSub({ clientId, accessToken, broadcasterId, rewardTit
       if (type === "notification") {
         const subType = msg.payload.subscription.type;
         if (subType === "channel.channel_points_custom_reward_redemption.add") {
-          const event = msg.payload.event;
-          if (!rewardTitle || event.reward.title === rewardTitle) {
-            onRedemption?.(event);
-          }
+          onRedemption?.(msg.payload.event);
         }
       }
 

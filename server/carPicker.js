@@ -275,9 +275,10 @@ function resolveCommandToken(token) {
   const norm = normalizeToken(token);
   const facets = getFacetOptions();
 
-  // Class, e.g. "s1", "a", "x" — check before country/manufacturer since these
-  // are short and could otherwise false-match.
-  const classMatch = facets.classes.find((c) => normalizeToken(c) === norm);
+  // Class, e.g. "s1", "a", "classa", "class a" — check before country/
+  // manufacturer since these are short and could otherwise false-match.
+  const classToken = norm.startsWith("class") ? norm.slice("class".length) : norm;
+  const classMatch = facets.classes.find((c) => normalizeToken(c) === classToken);
   if (classMatch) return { filters: { classes: [classMatch] }, matchedType: "class", matchedValue: classMatch };
 
   // Drivetrain
@@ -310,6 +311,29 @@ function resolveCommandToken(token) {
   return { filters: {}, matchedType: null };
 }
 
+// Matches Channel Points reward titles like "Change Car", "Change Car:",
+// "Change Car: Honda", "Change Car - Class A" (case-insensitive, separator
+// optional). Anything after the separator is resolved exactly like a chat
+// command token, so "Class A" / "RWD" / "Japan" / "90s" all work.
+const CHANGE_CAR_TITLE_PATTERN = /^change\s*car\s*[:\-]?\s*(.*)$/i;
+
+/**
+ * Resolves a Twitch Channel Points reward title into a filters object, using
+ * the same token matching as chat commands — lets a streamer create one
+ * reward per filter (any price they like, set entirely in the Twitch
+ * dashboard) without any code changes here. Returns null if the title
+ * doesn't match the "Change Car..." pattern at all, meaning it's an
+ * unrelated reward on the channel that should be ignored. A title with no
+ * token after "Change Car" (or a token that doesn't match anything) behaves
+ * like a bare "!changecar" — still spins, just with no filter, rather than
+ * silently eating a viewer's paid redemption.
+ */
+function resolveChangeCarTitle(title) {
+  const match = (title || "").trim().match(CHANGE_CAR_TITLE_PATTERN);
+  if (!match) return null;
+  return resolveCommandToken(match[1].trim());
+}
+
 module.exports = {
   loadCars,
   applyFilters,
@@ -317,5 +341,6 @@ module.exports = {
   computeRandomSpin,
   getFacetOptions,
   resolveCommandToken,
+  resolveChangeCarTitle,
   isFilterEmpty,
 };

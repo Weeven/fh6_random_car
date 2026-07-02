@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const { WebSocketServer } = require("ws");
 
-const { computeSpinResult, computeRandomSpin, getFacetOptions } = require("./carPicker");
+const { computeSpinResult, computeRandomSpin, getFacetOptions, resolveChangeCarTitle } = require("./carPicker");
 const { getFilters, setFilters } = require("./state");
 const { connectTwitchEventSub } = require("./twitchEventSub");
 const { connectTwitchChat } = require("./twitchChat");
@@ -72,25 +72,36 @@ function broadcastToOverlay(payload) {
   }
 }
 
-// ---- Twitch EventSub: trigger a spin whenever the configured reward is redeemed ----
+// ---- Twitch EventSub: trigger a spin whenever a "Change Car..." reward is redeemed ----
+//
+// Any number of Channel Points rewards can be created in the Twitch dashboard
+// at whatever price the streamer wants, each titled "Change Car" (no filter)
+// or "Change Car: <word>" (one filter, same tokens as chat commands, e.g.
+// "Change Car: Honda", "Change Car: Class A", "Change Car: RWD"). Redemptions
+// of anything else on the channel are ignored.
 
-const {
-  TWITCH_CLIENT_ID,
-  TWITCH_USER_ACCESS_TOKEN,
-  TWITCH_BROADCASTER_ID,
-  TWITCH_REWARD_TITLE,
-} = process.env;
+const { TWITCH_CLIENT_ID, TWITCH_USER_ACCESS_TOKEN, TWITCH_BROADCASTER_ID } = process.env;
 
 if (TWITCH_CLIENT_ID && TWITCH_USER_ACCESS_TOKEN && TWITCH_BROADCASTER_ID) {
   connectTwitchEventSub({
     clientId: TWITCH_CLIENT_ID,
     accessToken: TWITCH_USER_ACCESS_TOKEN,
     broadcasterId: TWITCH_BROADCASTER_ID,
-    rewardTitle: TWITCH_REWARD_TITLE || null,
     onStatus: (msg) => console.log(`[Twitch] ${msg}`),
     onRedemption: (event) => {
+      const resolved = resolveChangeCarTitle(event.reward.title);
+      if (!resolved) {
+        console.log(`[Twitch] Ignoring redemption of unrelated reward: "${event.reward.title}"`);
+        return;
+      }
+      if (!resolved.matchedType && event.reward.title.trim().toLowerCase() !== "change car") {
+        console.log(
+          `[Twitch] "${event.reward.title}" didn't match a known filter — spinning with no filter instead ` +
+            `of eating ${event.user_name}'s redemption. Check the reward title matches a chat command word.`
+        );
+      }
       console.log(`[Twitch] Redemption by ${event.user_name}: ${event.reward.title}`);
-      const result = computeSpinResult(getFilters());
+      const result = computeSpinResult(resolved.filters);
       broadcastToOverlay({ ...result, redeemedBy: event.user_name });
     },
   });
