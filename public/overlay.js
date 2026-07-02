@@ -20,10 +20,10 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 3000);
 }
 
-function handleSpinResult({ car, poolSize, redeemedBy, matchedType, matchedValue }) {
+function handleSpinResult({ manufacturer, country, region, poolSize, manufacturerCarCount, redeemedBy, matchedType, matchedValue }) {
   clearTimeout(hideTimer);
 
-  if (!car || poolSize === 0) {
+  if (!manufacturer || poolSize === 0) {
     card.classList.add("hidden");
     emptyEl.classList.remove("hidden");
     hideTimer = setTimeout(() => emptyEl.classList.add("hidden"), 4000);
@@ -32,7 +32,7 @@ function handleSpinResult({ car, poolSize, redeemedBy, matchedType, matchedValue
 
   emptyEl.classList.add("hidden");
   const filterNote = matchedType ? ` (${matchedType}: ${matchedValue})` : "";
-  redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun for a new car!${filterNote}` : "New car!";
+  redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun for a new manufacturer!${filterNote}` : "New manufacturer!";
   card.classList.remove("hidden");
   card.classList.add("show", "spinning");
   carMetaEl.textContent = "";
@@ -45,8 +45,9 @@ function handleSpinResult({ car, poolSize, redeemedBy, matchedType, matchedValue
     if (ticks > SPIN_DURATION_MS / 80) {
       clearInterval(flickerInterval);
       card.classList.remove("spinning");
-      carNameEl.textContent = car.name;
-      carMetaEl.textContent = `${car.manufacturer} · ${car.country} · Class ${car.class} · ${car.drivetrain}${car.year ? ` · ${car.year}` : ""}`;
+      carNameEl.textContent = manufacturer;
+      const carWord = manufacturerCarCount === 1 ? "car" : "cars";
+      carMetaEl.textContent = `${country} · ${region} · ${manufacturerCarCount} ${carWord} to choose from`;
     }
   }, 80);
 

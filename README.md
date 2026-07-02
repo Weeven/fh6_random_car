@@ -85,34 +85,37 @@ panel.
 
 ## How filtering works
 
-Each filter group (class, drivetrain, manufacturer, country, decade) is
-OR'd internally and AND'd across groups. E.g. selecting `RWD` + `AWD` for
-drivetrain and `Japan` for country gives you any Japanese car that's RWD
-*or* AWD.
+Every spin picks a random **manufacturer** — never a specific car model.
+The streamer picks whichever car of that manufacturer they want to drive
+in-game. Each filter group (class, drivetrain, manufacturer, country,
+region, decade) is OR'd internally and AND'd across groups — e.g. selecting
+`RWD` + `AWD` for drivetrain and `Japan` for country gives you any Japanese
+manufacturer with at least one car that's RWD *or* AWD.
 
-**If every group is left empty**, spins don't pick uniformly across all
-600+ cars — instead a random **manufacturer** is picked first, then a
-random car from that manufacturer. This keeps "no filter" results feeling
-like a normal car reveal instead of always weighting toward whichever
-manufacturer happens to have the most cars in the game.
+**If every group is left empty**, every manufacturer in the game gets equal
+odds, regardless of how many cars they have. Without this, a manufacturer
+with 30 cars (e.g. Ford) would show up far more often than one with a
+single car (e.g. Volvo) — equal odds per manufacturer keeps things fair.
 
 ## Chat commands
 
 Independent of whatever's set in the control panel, viewers (or you) can
 type in chat:
 
-- `!changecar` — same as "no filters": manufacturer-first random.
-- `!changecar-honda` — matches a manufacturer.
+- `!changecar` — any manufacturer.
+- `!changecar-asia` — matches a region/continent.
 - `!changecar-japan` — matches a country.
+- `!changecar-honda` — matches a manufacturer.
 - `!changecar-s1` — matches a class.
 - `!changecar-rwd` — matches a drivetrain.
 - `!changecar-90s` — matches a decade.
 
-Each command applies *only* the one filter it matched — it doesn't combine
-with the control panel's saved filters. If the word after the dash doesn't
-match anything, the bot (if `TWITCH_CHAT_REPLY=true`) replies saying so
-instead of silently failing. See `setup/twitch_setup.md` for how to connect
-the chat bot.
+Every variant reveals a manufacturer only, same as the Spin button. Each
+command applies *only* the one filter it matched — it doesn't combine with
+the control panel's saved filters. If the word after the dash doesn't match
+anything, the bot (if `TWITCH_CHAT_REPLY=true`) replies saying so instead of
+silently failing. See `setup/twitch_setup.md` for how to connect the chat
+bot.
 
 ## Notes & limitations
 

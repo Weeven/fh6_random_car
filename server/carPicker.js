@@ -4,11 +4,15 @@ const path = require("path");
 const DATA_PATH = fs.existsSync(path.join(__dirname, "..", "data", "cars.json"))
   ? path.join(__dirname, "..", "data", "cars.json")
   : path.join(__dirname, "..", "data", "cars.sample.json");
+const COUNTRY_CONTINENTS_PATH = path.join(__dirname, "..", "data", "country_continents.json");
+
+const countryContinents = JSON.parse(fs.readFileSync(COUNTRY_CONTINENTS_PATH, "utf8"));
 
 let cars = [];
 
 function loadCars() {
-  cars = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
+  const raw = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
+  cars = raw.map((car) => ({ ...car, region: countryContinents[car.country] || "Unknown" }));
   console.log(`Loaded ${cars.length} cars from ${path.basename(DATA_PATH)}`);
   return cars;
 }
@@ -21,6 +25,7 @@ function isFilterEmpty(filters = {}) {
     !filters.drivetrains?.length &&
     !filters.manufacturers?.length &&
     !filters.countries?.length &&
+    !filters.regions?.length &&
     !filters.decades?.length &&
     !filters.yearMin &&
     !filters.yearMax
@@ -34,6 +39,7 @@ function isFilterEmpty(filters = {}) {
  *   drivetrains: ["RWD"],
  *   manufacturers: ["Honda"],
  *   countries: ["Japan"],
+ *   regions: ["Asia"],
  *   decades: [1990, 2000],        // decade start years, e.g. 1990 = 1990-1999
  *   yearMin: 1990,                 // optional finer-grained range, combines with decades via AND
  *   yearMax: 2005
@@ -46,6 +52,7 @@ function applyFilters(filters = {}) {
     if (filters.drivetrains?.length && !filters.drivetrains.includes(car.drivetrain)) return false;
     if (filters.manufacturers?.length && !filters.manufacturers.includes(car.manufacturer)) return false;
     if (filters.countries?.length && !filters.countries.includes(car.country)) return false;
+    if (filters.regions?.length && !filters.regions.includes(car.region)) return false;
     if (filters.decades?.length) {
       if (!car.year) return false;
       const carDecade = Math.floor(car.year / 10) * 10;
@@ -57,32 +64,34 @@ function applyFilters(filters = {}) {
   });
 }
 
-function pickFromPool(pool) {
-  if (pool.length === 0) return null;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
 /**
- * Picks a random car matching the given filters.
- *
- * Special case: if NO filters are active at all (streamer selected nothing,
- * or a bare "!changecar" chat command with no suffix), we don't just grab
- * any of the 600+ cars uniformly — we first pick a random manufacturer, then
- * a random car from that manufacturer. Keeps results feeling curated rather
- * than fully chaotic, and gives every manufacturer roughly equal odds
- * regardless of how many cars they have in the game.
+ * Picks a random MANUFACTURER (not a specific car model) from whatever pool
+ * the given filters leave eligible. Every eligible manufacturer gets equal
+ * odds, regardless of how many cars they have in the game — so a
+ * single-car manufacturer like Volvo isn't drowned out by Ford's 30, but
+ * also doesn't become a "celebrity" result by resolving to one exact car
+ * every time. The streamer picks whichever car of that manufacturer they
+ * want in-game.
  */
-function pickRandomCar(filters = {}) {
-  if (isFilterEmpty(filters)) {
-    const manufacturers = [...new Set(cars.map((c) => c.manufacturer).filter(Boolean))];
-    if (manufacturers.length === 0) return { car: null, poolSize: 0 };
-    const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
-    const pool = cars.filter((c) => c.manufacturer === manufacturer);
-    return { car: pickFromPool(pool), poolSize: pool.length, pickedManufacturer: manufacturer };
+function pickRandomManufacturer(filters = {}) {
+  const pool = isFilterEmpty(filters) ? cars : applyFilters(filters);
+  const manufacturers = [...new Set(pool.map((c) => c.manufacturer).filter(Boolean))];
+
+  if (manufacturers.length === 0) {
+    return { manufacturer: null, country: null, region: null, poolSize: 0, manufacturerCarCount: 0 };
   }
 
-  const pool = applyFilters(filters);
-  return { car: pickFromPool(pool), poolSize: pool.length };
+  const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
+  const manufacturerCars = pool.filter((c) => c.manufacturer === manufacturer);
+  const { country, region } = manufacturerCars[0];
+
+  return {
+    manufacturer,
+    country,
+    region,
+    poolSize: pool.length,
+    manufacturerCarCount: manufacturerCars.length,
+  };
 }
 
 function getFacetOptions() {
@@ -90,6 +99,7 @@ function getFacetOptions() {
   const drivetrains = new Set();
   const manufacturers = new Set();
   const countries = new Set();
+  const regions = new Set();
   const decades = new Set();
   let yearMin = Infinity;
   let yearMax = -Infinity;
@@ -99,6 +109,7 @@ function getFacetOptions() {
     if (car.drivetrain) drivetrains.add(car.drivetrain);
     if (car.manufacturer) manufacturers.add(car.manufacturer);
     if (car.country) countries.add(car.country);
+    if (car.region) regions.add(car.region);
     if (car.year) {
       decades.add(Math.floor(car.year / 10) * 10);
       yearMin = Math.min(yearMin, car.year);
@@ -111,6 +122,7 @@ function getFacetOptions() {
     drivetrains: [...drivetrains].sort(),
     manufacturers: [...manufacturers].sort(),
     countries: [...countries].sort(),
+    regions: [...regions].sort(),
     decades: [...decades].sort((a, b) => a - b),
     yearRange: [yearMin === Infinity ? null : yearMin, yearMax === -Infinity ? null : yearMax],
     totalCars: cars.length,
@@ -122,8 +134,8 @@ function normalizeToken(str) {
 }
 
 /**
- * Resolves a chat command suffix (e.g. "japan", "honda", "s1", "rwd", "90s")
- * into a filters object, by matching it against known facet values.
+ * Resolves a chat command suffix (e.g. "japan", "honda", "s1", "rwd", "90s",
+ * "asia") into a filters object, by matching it against known facet values.
  * Returns { filters, matchedType, matchedValue } or { filters: {}, matchedType: null }
  * if nothing matched (caller should treat this like an empty/no-filter command).
  */
@@ -155,6 +167,10 @@ function resolveCommandToken(token) {
     }
   }
 
+  // Region/continent, e.g. "asia", "europe", "northamerica"
+  const regionMatch = facets.regions.find((r) => normalizeToken(r) === norm);
+  if (regionMatch) return { filters: { regions: [regionMatch] }, matchedType: "region", matchedValue: regionMatch };
+
   // Country
   const countryMatch = facets.countries.find((c) => normalizeToken(c) === norm);
   if (countryMatch) return { filters: { countries: [countryMatch] }, matchedType: "country", matchedValue: countryMatch };
@@ -168,4 +184,4 @@ function resolveCommandToken(token) {
   return { filters: {}, matchedType: null };
 }
 
-module.exports = { loadCars, applyFilters, pickRandomCar, getFacetOptions, resolveCommandToken, isFilterEmpty };
+module.exports = { loadCars, applyFilters, pickRandomManufacturer, getFacetOptions, resolveCommandToken, isFilterEmpty };

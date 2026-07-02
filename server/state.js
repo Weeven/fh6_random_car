@@ -8,6 +8,7 @@ let activeFilters = {
   drivetrains: [],
   manufacturers: [],
   countries: [],
+  regions: [],
   decades: [],
   yearMin: null,
   yearMax: null,

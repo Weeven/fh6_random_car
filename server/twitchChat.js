@@ -1,14 +1,19 @@
 const tmi = require("tmi.js");
-const { pickRandomCar, resolveCommandToken, isFilterEmpty } = require("./carPicker");
+const { pickRandomManufacturer, resolveCommandToken, isFilterEmpty } = require("./carPicker");
 
 /**
  * Connects to Twitch chat and listens for:
- *   !changecar            -> no filter (manufacturer-first random, see carPicker.js)
+ *   !changecar            -> no filter, any manufacturer
+ *   !changecar-asia       -> matches region/continent "Asia"
  *   !changecar-japan      -> matches country "Japan"
  *   !changecar-honda      -> matches manufacturer "Honda"
  *   !changecar-s1         -> matches class "S1"
  *   !changecar-rwd        -> matches drivetrain "RWD"
  *   !changecar-90s        -> matches decade 1990s
+ *
+ * Every variant reveals a MANUFACTURER only (see pickRandomManufacturer in
+ * carPicker.js) — never a specific car model. The streamer picks whichever
+ * car of that manufacturer they want in-game.
  *
  * Chat-triggered spins are one-off: they use ONLY the filter parsed from the
  * command (ignoring whatever the streamer currently has set in the control
@@ -44,21 +49,21 @@ function connectTwitchChat({ botUsername, oauthToken, channel, onSpin, onStatus,
       matchedValue = resolved.matchedValue;
 
       if (!matchedType) {
-        onStatus?.(`"${token}" didn't match any country/manufacturer/class/drivetrain/decade`);
+        onStatus?.(`"${token}" didn't match any region/country/manufacturer/class/drivetrain/decade`);
         if (replyInChat) {
           client
-            .say(chatChannel, `@${tags["display-name"] || tags.username} I don't recognize "${token}" — try a manufacturer, country, class (e.g. s1), drivetrain (rwd/fwd/awd), or decade (e.g. 90s).`)
+            .say(chatChannel, `@${tags["display-name"] || tags.username} I don't recognize "${token}" — try a region (e.g. asia), country, manufacturer, class (e.g. s1), drivetrain (rwd/fwd/awd), or decade (e.g. 90s).`)
             .catch(() => {});
         }
         return;
       }
     }
 
-    const result = pickRandomCar(filters);
+    const result = pickRandomManufacturer(filters);
     onSpin?.({ ...result, redeemedBy: tags["display-name"] || tags.username, matchedType, matchedValue });
 
     if (replyInChat) {
-      const name = result.car ? result.car.name : `no car matched "${token}"`;
+      const name = result.manufacturer ? `${result.manufacturer} (${result.country})` : `no manufacturer matched "${token}"`;
       client.say(chatChannel, `🎲 ${name}`).catch(() => {});
     }
   });

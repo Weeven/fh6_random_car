@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const { WebSocketServer } = require("ws");
 
-const { pickRandomCar, getFacetOptions } = require("./carPicker");
+const { pickRandomManufacturer, getFacetOptions } = require("./carPicker");
 const { getFilters, setFilters } = require("./state");
 const { connectTwitchEventSub } = require("./twitchEventSub");
 const { connectTwitchChat } = require("./twitchChat");
@@ -37,7 +37,7 @@ app.get("/api/pool-count", (req, res) => {
 
 // Manual spin trigger (from the control panel "Spin now" button, or curl/OBS hotkey via a tool like Hotkey Server)
 app.post("/api/spin", (req, res) => {
-  const result = pickRandomCar(getFilters());
+  const result = pickRandomManufacturer(getFilters());
   broadcastToOverlay(result);
   res.json(result);
 });
@@ -83,7 +83,7 @@ if (TWITCH_CLIENT_ID && TWITCH_USER_ACCESS_TOKEN && TWITCH_BROADCASTER_ID) {
     onStatus: (msg) => console.log(`[Twitch] ${msg}`),
     onRedemption: (event) => {
       console.log(`[Twitch] Redemption by ${event.user_name}: ${event.reward.title}`);
-      const result = pickRandomCar(getFilters());
+      const result = pickRandomManufacturer(getFilters());
       broadcastToOverlay({ ...result, redeemedBy: event.user_name });
     },
   });
