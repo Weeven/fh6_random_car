@@ -1,7 +1,11 @@
 # FH6 Random Car
 
-> **Continuing this project with Claude?** Open PowerShell, `cd` into this
-> folder, run `claude --continue`.
+> **Continuing this project with Claude?** Open PowerShell, paste this
+> whole block in, press Enter:
+> ```powershell
+> cd "C:\Users\USER\Documents\claude\fh6-random-car-"
+> claude --continue
+> ```
 
 A random car picker for **Forza Horizon 6**, built for streamers. Viewers
 spend Channel Points to trigger a random car change; the result appears as
