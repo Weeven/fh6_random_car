@@ -4,6 +4,7 @@ const groups = {
   countries: document.getElementById("countries"),
   manufacturers: document.getElementById("manufacturers"),
   decades: document.getElementById("decades"),
+  divisions: document.getElementById("divisions"),
 };
 
 const poolCountEl = document.getElementById("poolCount");
@@ -24,6 +25,7 @@ async function init() {
     activeFilters.decades,
     (decade) => `${decade}s`
   );
+  renderChips("divisions", facets.divisions, activeFilters.divisions);
 
   refreshPoolCount();
 }
@@ -54,6 +56,7 @@ async function saveFilters() {
     countries: getSelected("countries"),
     manufacturers: getSelected("manufacturers"),
     decades: getSelected("decades", true),
+    divisions: getSelected("divisions"),
     yearMin: null,
     yearMax: null,
   };

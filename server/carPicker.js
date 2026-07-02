@@ -22,6 +22,7 @@ function isFilterEmpty(filters = {}) {
     !filters.manufacturers?.length &&
     !filters.countries?.length &&
     !filters.decades?.length &&
+    !filters.divisions?.length &&
     !filters.yearMin &&
     !filters.yearMax
   );
@@ -35,6 +36,7 @@ function isFilterEmpty(filters = {}) {
  *   manufacturers: ["Honda"],
  *   countries: ["Japan"],
  *   decades: [1990, 2000],        // decade start years, e.g. 1990 = 1990-1999
+ *   divisions: ["Track Toys"],    // kudosprime's thematic groupings — not every car has one
  *   yearMin: 1990,                 // optional finer-grained range, combines with decades via AND
  *   yearMax: 2005
  * }
@@ -46,6 +48,7 @@ function applyFilters(filters = {}) {
     if (filters.drivetrains?.length && !filters.drivetrains.includes(car.drivetrain)) return false;
     if (filters.manufacturers?.length && !filters.manufacturers.includes(car.manufacturer)) return false;
     if (filters.countries?.length && !filters.countries.includes(car.country)) return false;
+    if (filters.divisions?.length && !filters.divisions.includes(car.division)) return false;
     if (filters.decades?.length) {
       if (!car.year) return false;
       const carDecade = Math.floor(car.year / 10) * 10;
@@ -57,7 +60,7 @@ function applyFilters(filters = {}) {
   });
 }
 
-const FILTER_KEYS = ["manufacturers", "decades", "classes", "drivetrains", "countries"];
+const FILTER_KEYS = ["manufacturers", "divisions", "decades", "classes", "drivetrains", "countries"];
 // Order dropped in when a combo is too narrow — most-specific/most-narrowing first.
 const MIN_POOL_SIZE = 6; // reveals must match MORE than 5 cars — otherwise chat/the streamer may not own one
 
@@ -69,6 +72,7 @@ function labelForFilters(filters) {
   const parts = [];
   if (filters.countries?.length) parts.push(filters.countries.join("/"));
   if (filters.manufacturers?.length) parts.push(filters.manufacturers.join("/"));
+  if (filters.divisions?.length) parts.push(filters.divisions.join("/"));
   if (filters.classes?.length) parts.push(`Class ${filters.classes.join("/")}`);
   if (filters.drivetrains?.length) parts.push(filters.drivetrains.join("/"));
   if (filters.decades?.length) parts.push(filters.decades.map((d) => `${d}s`).join("/"));
@@ -256,6 +260,7 @@ function computeRandomSpin() {
     classes: sourceCar.class,
     drivetrains: sourceCar.drivetrain,
     countries: sourceCar.country,
+    divisions: sourceCar.division,
   };
 
   const availableKeys = FILTER_KEYS.filter((key) => dimensionValues[key] != null);
@@ -320,6 +325,7 @@ function getFacetOptions() {
   const manufacturers = new Set();
   const countries = new Set();
   const decades = new Set();
+  const divisions = new Set();
   let yearMin = Infinity;
   let yearMax = -Infinity;
 
@@ -328,6 +334,7 @@ function getFacetOptions() {
     if (car.drivetrain) drivetrains.add(car.drivetrain);
     if (car.manufacturer) manufacturers.add(car.manufacturer);
     if (car.country) countries.add(car.country);
+    if (car.division) divisions.add(car.division);
     if (car.year) {
       decades.add(Math.floor(car.year / 10) * 10);
       yearMin = Math.min(yearMin, car.year);
@@ -341,6 +348,7 @@ function getFacetOptions() {
     manufacturers: [...manufacturers].sort(),
     countries: [...countries].sort(),
     decades: [...decades].sort((a, b) => a - b),
+    divisions: [...divisions].sort(),
     yearRange: [yearMin === Infinity ? null : yearMin, yearMax === -Infinity ? null : yearMax],
     totalCars: cars.length,
   };
@@ -393,6 +401,12 @@ function resolveCommandToken(token) {
   const manufacturerMatch = facets.manufacturers.find((m) => normalizeToken(m) === norm);
   if (manufacturerMatch) {
     return { filters: { manufacturers: [manufacturerMatch] }, matchedType: "manufacturer", matchedValue: manufacturerMatch };
+  }
+
+  // Division, e.g. "trackToys", "hothatch", "rallymonsters"
+  const divisionMatch = facets.divisions.find((d) => normalizeToken(d) === norm);
+  if (divisionMatch) {
+    return { filters: { divisions: [divisionMatch] }, matchedType: "division", matchedValue: divisionMatch };
   }
 
   return { filters: {}, matchedType: null };

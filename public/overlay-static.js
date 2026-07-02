@@ -23,7 +23,7 @@ let cars = [];
 // ---- Ported from server/carPicker.js (random-pick logic only — no
 // manual filters, no Twitch, nothing that needs a server) ----
 
-const FILTER_KEYS = ["manufacturers", "decades", "classes", "drivetrains", "countries"];
+const FILTER_KEYS = ["manufacturers", "divisions", "decades", "classes", "drivetrains", "countries"];
 const MIN_POOL_SIZE = 6;
 
 function applyFilters(filters = {}) {
@@ -32,6 +32,7 @@ function applyFilters(filters = {}) {
     if (filters.drivetrains?.length && !filters.drivetrains.includes(c.drivetrain)) return false;
     if (filters.manufacturers?.length && !filters.manufacturers.includes(c.manufacturer)) return false;
     if (filters.countries?.length && !filters.countries.includes(c.country)) return false;
+    if (filters.divisions?.length && !filters.divisions.includes(c.division)) return false;
     if (filters.decades?.length) {
       if (!c.year) return false;
       if (!filters.decades.includes(Math.floor(c.year / 10) * 10)) return false;
@@ -46,7 +47,8 @@ function isFilterEmpty(filters = {}) {
     !filters.drivetrains?.length &&
     !filters.manufacturers?.length &&
     !filters.countries?.length &&
-    !filters.decades?.length
+    !filters.decades?.length &&
+    !filters.divisions?.length
   );
 }
 
@@ -58,6 +60,7 @@ function labelForFilters(filters) {
   const parts = [];
   if (filters.countries?.length) parts.push(filters.countries.join("/"));
   if (filters.manufacturers?.length) parts.push(filters.manufacturers.join("/"));
+  if (filters.divisions?.length) parts.push(filters.divisions.join("/"));
   if (filters.classes?.length) parts.push(`Class ${filters.classes.join("/")}`);
   if (filters.drivetrains?.length) parts.push(filters.drivetrains.join("/"));
   if (filters.decades?.length) parts.push(filters.decades.map((d) => `${d}s`).join("/"));
@@ -154,6 +157,7 @@ function computeRandomSpin() {
     classes: sourceCar.class,
     drivetrains: sourceCar.drivetrain,
     countries: sourceCar.country,
+    divisions: sourceCar.division,
   };
 
   const availableKeys = FILTER_KEYS.filter((key) => dimensionValues[key] != null);

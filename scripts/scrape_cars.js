@@ -48,6 +48,26 @@ async function scrape() {
 
   const countryMap = JSON.parse(fs.readFileSync(COUNTRY_MAP_PATH, "utf8"));
 
+  // The page's own "Division" filter dropdown (Track Toys, Unlimited
+  // Buggies, Rally Monsters, Hot Hatch, etc.) doubles as the id->name lookup
+  // for each car's data-cty attribute — kudosprime doesn't print the name
+  // inline on every car block, only the numeric id.
+  const ACRONYM_FIXES = { Gt: "GT", "Utv's": "UTV's" };
+  const divisionMap = {};
+  $('select[name="cartype"] option').each((_, el) => {
+    const value = $(el).attr("value");
+    const text = $(el).text().trim();
+    if (!value || !text) return;
+    divisionMap[value] = text
+      .toLowerCase()
+      .split(" ")
+      .map((w) => {
+        const titled = w.charAt(0).toUpperCase() + w.slice(1);
+        return ACRONYM_FIXES[titled] || titled;
+      })
+      .join(" ");
+  });
+
   const cars = [];
 
   // Cars live inside #carlist as a flat sequence of siblings: a
@@ -93,6 +113,13 @@ async function scrape() {
 
       const source = node.find(".car_source b").first().text().trim() || null;
 
+      // Not every car has a division — plenty of everyday road cars sit
+      // outside kudosprime's thematic groupings (Track Toys, Unlimited
+      // Buggies, Rally Monsters, etc.), same as class being null for a
+      // handful of unrated cars.
+      const ctyId = node.find(".cty").first().attr("data-cty");
+      const division = ctyId ? divisionMap[ctyId] || null : null;
+
       cars.push({
         id: carId ? `${carId}-${slugify(fullName)}` : slugify(`${year || "unk"}-${fullName}`),
         name: fullName,
@@ -101,6 +128,7 @@ async function scrape() {
         year,
         class: classLetter,
         drivetrain,
+        division,
         rarity: null,
         source,
       });

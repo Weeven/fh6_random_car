@@ -9,6 +9,7 @@ let activeFilters = {
   manufacturers: [],
   countries: [],
   decades: [],
+  divisions: [],
   yearMin: null,
   yearMax: null,
 };
