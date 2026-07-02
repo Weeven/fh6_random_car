@@ -4,7 +4,6 @@ const { computeSpinResult, resolveCommandToken, isFilterEmpty } = require("./car
 /**
  * Connects to Twitch chat and listens for:
  *   !changecar            -> no filter, reveals a random manufacturer
- *   !changecar-asia       -> matches region/continent "Asia"
  *   !changecar-japan      -> matches country "Japan"
  *   !changecar-honda      -> matches manufacturer "Honda"
  *   !changecar-s1         -> matches class "S1"
@@ -49,10 +48,10 @@ function connectTwitchChat({ botUsername, oauthToken, channel, onSpin, onStatus,
       matchedValue = resolved.matchedValue;
 
       if (!matchedType) {
-        onStatus?.(`"${token}" didn't match any region/country/manufacturer/class/drivetrain/decade`);
+        onStatus?.(`"${token}" didn't match any country/manufacturer/class/drivetrain/decade`);
         if (replyInChat) {
           client
-            .say(chatChannel, `@${tags["display-name"] || tags.username} I don't recognize "${token}" — try a region (e.g. asia), country, manufacturer, class (e.g. s1), drivetrain (rwd/fwd/awd), or decade (e.g. 90s).`)
+            .say(chatChannel, `@${tags["display-name"] || tags.username} I don't recognize "${token}" — try a country, manufacturer, class (e.g. s1), drivetrain (rwd/fwd/awd), or decade (e.g. 90s).`)
             .catch(() => {});
         }
         return;

@@ -103,17 +103,19 @@ the active filters pin down, and no more:
   reveal at more than 5 matching cars, so there's a decent chance whoever's
   playing actually owns one.
 
-Each filter group (class, drivetrain, manufacturer, country, region, decade)
-is OR'd internally and AND'd across groups — e.g. selecting `RWD` + `AWD`
-for drivetrain and `Japan` for country matches anything Japanese that's RWD
+Each filter group (class, drivetrain, manufacturer, country, decade) is
+OR'd internally and AND'd across groups — e.g. selecting `RWD` + `AWD` for
+drivetrain and `Japan` for country matches anything Japanese that's RWD
 *or* AWD.
 
 **Refreshing/loading `overlay.html`** on its own (e.g. re-adding the OBS
 Browser Source) also reveals something random — independent of the control
 panel's saved filters, chat, and Channel Points. It's a random 0-2 filter
-combo each time (sometimes just a manufacturer, sometimes "Region · Decade",
-sometimes "Drivetrain · Country", etc.), broadened the same way if too
-narrow.
+combo each time (sometimes just a manufacturer, sometimes "Decade ·
+Drivetrain", sometimes "Country · Class", etc.), broadened the same way if
+too narrow. Manufacturer and country are never combined together in this
+random combo, since each manufacturer maps to exactly one country here —
+"United Kingdom · Jaguar" wouldn't say anything "Jaguar" alone doesn't.
 
 ## Chat commands
 
@@ -121,7 +123,6 @@ Independent of whatever's set in the control panel, viewers (or you) can
 type in chat:
 
 - `!changecar` — any manufacturer.
-- `!changecar-asia` — matches a region/continent.
 - `!changecar-japan` — matches a country.
 - `!changecar-honda` — matches a manufacturer.
 - `!changecar-s1` — matches a class.

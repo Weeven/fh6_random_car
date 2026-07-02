@@ -2,7 +2,6 @@ const groups = {
   classes: document.getElementById("classes"),
   drivetrains: document.getElementById("drivetrains"),
   countries: document.getElementById("countries"),
-  regions: document.getElementById("regions"),
   manufacturers: document.getElementById("manufacturers"),
   decades: document.getElementById("decades"),
 };
@@ -18,7 +17,6 @@ async function init() {
   renderChips("classes", facets.classes, activeFilters.classes);
   renderChips("drivetrains", facets.drivetrains, activeFilters.drivetrains);
   renderChips("countries", facets.countries, activeFilters.countries);
-  renderChips("regions", facets.regions, activeFilters.regions);
   renderChips("manufacturers", facets.manufacturers, activeFilters.manufacturers);
   renderChips(
     "decades",
@@ -54,7 +52,6 @@ async function saveFilters() {
     classes: getSelected("classes"),
     drivetrains: getSelected("drivetrains"),
     countries: getSelected("countries"),
-    regions: getSelected("regions"),
     manufacturers: getSelected("manufacturers"),
     decades: getSelected("decades", true),
     yearMin: null,

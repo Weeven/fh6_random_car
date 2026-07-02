@@ -4,15 +4,11 @@ const path = require("path");
 const DATA_PATH = fs.existsSync(path.join(__dirname, "..", "data", "cars.json"))
   ? path.join(__dirname, "..", "data", "cars.json")
   : path.join(__dirname, "..", "data", "cars.sample.json");
-const COUNTRY_CONTINENTS_PATH = path.join(__dirname, "..", "data", "country_continents.json");
-
-const countryContinents = JSON.parse(fs.readFileSync(COUNTRY_CONTINENTS_PATH, "utf8"));
 
 let cars = [];
 
 function loadCars() {
-  const raw = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
-  cars = raw.map((car) => ({ ...car, region: countryContinents[car.country] || "Unknown" }));
+  cars = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
   console.log(`Loaded ${cars.length} cars from ${path.basename(DATA_PATH)}`);
   return cars;
 }
@@ -25,7 +21,6 @@ function isFilterEmpty(filters = {}) {
     !filters.drivetrains?.length &&
     !filters.manufacturers?.length &&
     !filters.countries?.length &&
-    !filters.regions?.length &&
     !filters.decades?.length &&
     !filters.yearMin &&
     !filters.yearMax
@@ -39,7 +34,6 @@ function isFilterEmpty(filters = {}) {
  *   drivetrains: ["RWD"],
  *   manufacturers: ["Honda"],
  *   countries: ["Japan"],
- *   regions: ["Asia"],
  *   decades: [1990, 2000],        // decade start years, e.g. 1990 = 1990-1999
  *   yearMin: 1990,                 // optional finer-grained range, combines with decades via AND
  *   yearMax: 2005
@@ -52,7 +46,6 @@ function applyFilters(filters = {}) {
     if (filters.drivetrains?.length && !filters.drivetrains.includes(car.drivetrain)) return false;
     if (filters.manufacturers?.length && !filters.manufacturers.includes(car.manufacturer)) return false;
     if (filters.countries?.length && !filters.countries.includes(car.country)) return false;
-    if (filters.regions?.length && !filters.regions.includes(car.region)) return false;
     if (filters.decades?.length) {
       if (!car.year) return false;
       const carDecade = Math.floor(car.year / 10) * 10;
@@ -64,7 +57,7 @@ function applyFilters(filters = {}) {
   });
 }
 
-const FILTER_KEYS = ["manufacturers", "decades", "classes", "drivetrains", "countries", "regions"];
+const FILTER_KEYS = ["manufacturers", "decades", "classes", "drivetrains", "countries"];
 // Order dropped in when a combo is too narrow — most-specific/most-narrowing first.
 const MIN_POOL_SIZE = 6; // reveals must match MORE than 5 cars — otherwise chat/the streamer may not own one
 
@@ -74,7 +67,6 @@ function activeFilterKeys(filters) {
 
 function labelForFilters(filters) {
   const parts = [];
-  if (filters.regions?.length) parts.push(filters.regions.join("/"));
   if (filters.countries?.length) parts.push(filters.countries.join("/"));
   if (filters.manufacturers?.length) parts.push(filters.manufacturers.join("/"));
   if (filters.classes?.length) parts.push(`Class ${filters.classes.join("/")}`);
@@ -149,12 +141,17 @@ function computeSpinResult(filters = {}) {
 }
 
 /**
- * Generates a fully random filter combo (0-2 random dimensions, e.g. "region
- * + decade" or "drivetrain + country" or just one manufacturer) for the
- * overlay's "refresh the page for something random" feature. Always broadens
- * down to a bigger pool (or all the way to a random manufacturer) if the
- * random combo turns out too narrow — there's no user intent to preserve
- * here, unlike computeSpinResult.
+ * Generates a fully random filter combo (0-2 random dimensions, e.g.
+ * "decade + drivetrain" or "country + class" or just one manufacturer) for
+ * the overlay's "refresh the page for something random" feature. Always
+ * broadens down to a bigger pool (or all the way to a random manufacturer)
+ * if the random combo turns out too narrow — there's no user intent to
+ * preserve here, unlike computeSpinResult.
+ *
+ * Manufacturer and country are never combined together — in this dataset
+ * each manufacturer maps to exactly one country, so e.g. "United Kingdom ·
+ * Jaguar" adds no information over just "Jaguar" and would just read as
+ * redundant.
  *
  * Unlike computeSpinResult's equal-odds-per-manufacturer fallback, this
  * favors whichever values have more cars behind them — sampled by picking
@@ -174,7 +171,6 @@ function computeRandomSpin() {
     classes: sourceCar.class,
     drivetrains: sourceCar.drivetrain,
     countries: sourceCar.country,
-    regions: sourceCar.region,
   };
 
   const availableKeys = FILTER_KEYS.filter((key) => dimensionValues[key] != null);
@@ -185,7 +181,11 @@ function computeRandomSpin() {
 
   const dimensionCount = Math.floor(Math.random() * 3); // 0, 1, or 2 dimensions
   const filters = {};
-  for (const key of availableKeys.slice(0, dimensionCount)) {
+  for (const key of availableKeys) {
+    if (activeFilterKeys(filters).length >= dimensionCount) break;
+    // manufacturer implies country 1:1 here — never pick both together.
+    if (key === "countries" && filters.manufacturers?.length) continue;
+    if (key === "manufacturers" && filters.countries?.length) continue;
     filters[key] = [dimensionValues[key]];
   }
 
@@ -207,7 +207,6 @@ function getFacetOptions() {
   const drivetrains = new Set();
   const manufacturers = new Set();
   const countries = new Set();
-  const regions = new Set();
   const decades = new Set();
   let yearMin = Infinity;
   let yearMax = -Infinity;
@@ -217,7 +216,6 @@ function getFacetOptions() {
     if (car.drivetrain) drivetrains.add(car.drivetrain);
     if (car.manufacturer) manufacturers.add(car.manufacturer);
     if (car.country) countries.add(car.country);
-    if (car.region) regions.add(car.region);
     if (car.year) {
       decades.add(Math.floor(car.year / 10) * 10);
       yearMin = Math.min(yearMin, car.year);
@@ -230,7 +228,6 @@ function getFacetOptions() {
     drivetrains: [...drivetrains].sort(),
     manufacturers: [...manufacturers].sort(),
     countries: [...countries].sort(),
-    regions: [...regions].sort(),
     decades: [...decades].sort((a, b) => a - b),
     yearRange: [yearMin === Infinity ? null : yearMin, yearMax === -Infinity ? null : yearMax],
     totalCars: cars.length,
@@ -242,8 +239,8 @@ function normalizeToken(str) {
 }
 
 /**
- * Resolves a chat command suffix (e.g. "japan", "honda", "s1", "rwd", "90s",
- * "asia") into a filters object, by matching it against known facet values.
+ * Resolves a chat command suffix (e.g. "japan", "honda", "s1", "rwd", "90s")
+ * into a filters object, by matching it against known facet values.
  * Returns { filters, matchedType, matchedValue } or { filters: {}, matchedType: null }
  * if nothing matched (caller should treat this like an empty/no-filter command).
  */
@@ -274,10 +271,6 @@ function resolveCommandToken(token) {
       return { filters: { decades: [decade] }, matchedType: "decade", matchedValue: decade };
     }
   }
-
-  // Region/continent, e.g. "asia", "europe", "northamerica"
-  const regionMatch = facets.regions.find((r) => normalizeToken(r) === norm);
-  if (regionMatch) return { filters: { regions: [regionMatch] }, matchedType: "region", matchedValue: regionMatch };
 
   // Country
   const countryMatch = facets.countries.find((c) => normalizeToken(c) === norm);
