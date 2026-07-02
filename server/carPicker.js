@@ -82,6 +82,25 @@ function randomManufacturerResult() {
 }
 
 /**
+ * Weighted-by-count random manufacturer pick, restricted to manufacturers
+ * with at least minCount cars — used for computeRandomSpin's fallback so a
+ * dropped-for-being-too-narrow manufacturer (e.g. McLaren's 12 cars losing
+ * out to a rarer decade combo) can't sneak back in as the final reveal
+ * un-vetted. Falls back to any manufacturer only if literally none clear
+ * the bar (shouldn't happen with this dataset).
+ */
+function weightedManufacturerWithMinCount(minCount) {
+  const counts = new Map();
+  for (const car of cars) {
+    if (!car.manufacturer) continue;
+    counts.set(car.manufacturer, (counts.get(car.manufacturer) || 0) + 1);
+  }
+  const eligibleCars = cars.filter((c) => c.manufacturer && counts.get(c.manufacturer) >= minCount);
+  const pool = eligibleCars.length > 0 ? eligibleCars : cars;
+  return pool[Math.floor(Math.random() * pool.length)].manufacturer;
+}
+
+/**
  * Drops filter dimensions (in FILTER_KEYS priority order, most-specific
  * first) until the pool is bigger than MIN_POOL_SIZE - 1.
  *
@@ -191,7 +210,13 @@ function computeRandomSpin() {
 
   const { active, pool } = broadenPool(filters, { keepAtLeastOneFilter: false });
   if (isFilterEmpty(active)) {
-    return { label: sourceCar.manufacturer, manufacturer: sourceCar.manufacturer, poolSize: cars.length, narrowed: false };
+    // Everything we tried (including a manufacturer, if one was picked) got
+    // dropped for being too narrow — DON'T fall back to the original
+    // sourceCar's manufacturer here, since that's exactly what might have
+    // just been dropped. Re-roll restricted to manufacturers that actually
+    // clear the pool-size bar.
+    const manufacturer = weightedManufacturerWithMinCount(MIN_POOL_SIZE);
+    return { label: manufacturer, manufacturer, poolSize: cars.length, narrowed: false };
   }
 
   return {
