@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const { WebSocketServer } = require("ws");
 
-const { computeSpinResult, computeRandomSpin, sampleRandomLabels, getFacetOptions, resolveChangeCarTitle, resultForToken } = require("./carPicker");
+const { computeSpinResult, computeRandomSpin, buildWheelDecoys, getFacetOptions, resolveChangeCarTitle, resultForToken } = require("./carPicker");
 const { getFilters, setFilters } = require("./state");
 const { connectTwitchEventSub } = require("./twitchEventSub");
 const { connectTwitchChat } = require("./twitchChat");
@@ -51,10 +51,11 @@ app.get("/api/random-spin", (req, res) => {
 
 // Fills out the wheel overlay's decoy slots with the same variety of
 // results a real spin could produce (manufacturer, decade, class,
-// drivetrain, country, or combos) rather than one fixed dimension.
+// drivetrain, country, division, or combos), plus a guaranteed handful of
+// activities and exact-car reveals rather than leaving those to chance.
 app.get("/api/wheel-labels", (req, res) => {
   const count = Math.max(0, parseInt(req.query.count, 10) || 19);
-  res.json({ labels: sampleRandomLabels(count, req.query.exclude || null) });
+  res.json({ labels: buildWheelDecoys(count, req.query.exclude || null) });
 });
 
 const server = app.listen(PORT, () => {

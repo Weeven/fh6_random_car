@@ -205,9 +205,8 @@ function computeRandomSpin() {
   return { label: labelForFilters(active), poolSize: pool.length };
 }
 
-function sampleRandomLabels(count, excludeLabel) {
-  const seen = new Set();
-  if (excludeLabel) seen.add(excludeLabel);
+function sampleRandomLabels(count, excludeLabels) {
+  const seen = new Set(Array.isArray(excludeLabels) ? excludeLabels : excludeLabels ? [excludeLabels] : []);
   const labels = [];
   const maxAttempts = count * 50 + 200;
   for (let attempts = 0; labels.length < count && attempts < maxAttempts; attempts++) {
@@ -219,10 +218,58 @@ function sampleRandomLabels(count, excludeLabel) {
   return labels;
 }
 
+function pickUniqueActivities(count, seen) {
+  const pool = ACTIVITIES.filter((a) => !seen.has(a));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}
+
+function pickUniqueJackpots(count, seen) {
+  const picks = [];
+  for (let attempts = 0; picks.length < count && attempts < count * 30 + 50; attempts++) {
+    const name = cleanCarName(sqrtWeightedSourceCar());
+    if (seen.has(name)) continue;
+    seen.add(name);
+    picks.push(name);
+  }
+  return picks;
+}
+
+const MIN_ACTIVITY_SLOTS = 2;
+const MIN_JACKPOT_SLOTS = 2;
+
+// Guarantees at least MIN_ACTIVITY_SLOTS activities and MIN_JACKPOT_SLOTS
+// specific-car reveals among the wheel's decoy slots, rather than leaving
+// that to chance via computeRandomSpin's own per-call odds — which could
+// easily land on zero of either across a wheel's worth of slots.
+function buildWheelDecoys(count, excludeLabel) {
+  const seen = new Set(excludeLabel ? [excludeLabel] : []);
+
+  const guaranteedActivities = pickUniqueActivities(Math.min(MIN_ACTIVITY_SLOTS, count), seen);
+  guaranteedActivities.forEach((a) => seen.add(a));
+
+  const jackpotCount = Math.min(MIN_JACKPOT_SLOTS, Math.max(count - guaranteedActivities.length, 0));
+  const guaranteedJackpots = pickUniqueJackpots(jackpotCount, seen);
+  guaranteedJackpots.forEach((j) => seen.add(j));
+
+  const remaining = count - guaranteedActivities.length - guaranteedJackpots.length;
+  const fillers = sampleRandomLabels(remaining, [...seen]);
+
+  const decoys = [...guaranteedActivities, ...guaranteedJackpots, ...fillers];
+  for (let i = decoys.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [decoys[i], decoys[j]] = [decoys[j], decoys[i]];
+  }
+  return decoys;
+}
+
 // ---- Wheel drawing / spin (identical to overlay-wheel.js) ----
 
 function buildLabels(realLabel) {
-  const decoys = sampleRandomLabels(SLICE_COUNT - 1, realLabel);
+  const decoys = buildWheelDecoys(SLICE_COUNT - 1, realLabel);
   const winningIndex = Math.floor(Math.random() * SLICE_COUNT);
   const labels = [...decoys];
   labels.splice(winningIndex, 0, realLabel);
