@@ -1,5 +1,8 @@
 # FH6 Random Car
 
+> **Continuing this project with Claude?** Open PowerShell, `cd` into this
+> folder, run `claude --continue`.
+
 A random car picker for **Forza Horizon 6**, built for streamers. Viewers
 spend Channel Points to trigger a random car change; the result appears as
 an animated card on an OBS overlay. You control which cars are in the pool
