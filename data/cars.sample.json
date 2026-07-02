@@ -1,0 +1,112 @@
+[
+  {
+    "id": "honda-civic-type-r-2023",
+    "name": "2023 Honda Civic Type R",
+    "manufacturer": "Honda",
+    "country": "Japan",
+    "year": 2023,
+    "class": "A",
+    "drivetrain": "FWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  },
+  {
+    "id": "nissan-skyline-gtr-r34-1999",
+    "name": "1999 Nissan Skyline GT-R V-Spec (R34)",
+    "manufacturer": "Nissan",
+    "country": "Japan",
+    "year": 1999,
+    "class": "S1",
+    "drivetrain": "AWD",
+    "rarity": "Rare",
+    "source": "Autoshow"
+  },
+  {
+    "id": "toyota-supra-mk4-1998",
+    "name": "1998 Toyota Supra RZ",
+    "manufacturer": "Toyota",
+    "country": "Japan",
+    "year": 1998,
+    "class": "A",
+    "drivetrain": "RWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  },
+  {
+    "id": "ford-mustang-shelby-gt500-2020",
+    "name": "2020 Ford Shelby GT500",
+    "manufacturer": "Ford",
+    "country": "USA",
+    "year": 2020,
+    "class": "S1",
+    "drivetrain": "RWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  },
+  {
+    "id": "chevrolet-corvette-c8-2020",
+    "name": "2020 Chevrolet Corvette Stingray",
+    "manufacturer": "Chevrolet",
+    "country": "USA",
+    "year": 2020,
+    "class": "A",
+    "drivetrain": "RWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  },
+  {
+    "id": "bmw-m3-e30-1990",
+    "name": "1990 BMW M3 Sport Evolution (E30)",
+    "manufacturer": "BMW",
+    "country": "Germany",
+    "year": 1990,
+    "class": "B",
+    "drivetrain": "RWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  },
+  {
+    "id": "porsche-911-gt3rs-2022",
+    "name": "2022 Porsche 911 GT3 RS",
+    "manufacturer": "Porsche",
+    "country": "Germany",
+    "year": 2022,
+    "class": "S1",
+    "drivetrain": "RWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  },
+  {
+    "id": "subaru-impreza-22b-1998",
+    "name": "1998 Subaru Impreza 22B STi",
+    "manufacturer": "Subaru",
+    "country": "Japan",
+    "year": 1998,
+    "class": "B",
+    "drivetrain": "AWD",
+    "rarity": "Epic",
+    "source": "Wheelspin"
+  },
+  {
+    "id": "ferrari-250gto-1962",
+    "name": "1962 Ferrari 250 GTO",
+    "manufacturer": "Ferrari",
+    "country": "Italy",
+    "year": 1962,
+    "class": "C",
+    "drivetrain": "RWD",
+    "rarity": "Legendary",
+    "source": "Auction House"
+  },
+  {
+    "id": "mitsubishi-lancer-evo-vi-1999",
+    "name": "1999 Mitsubishi Lancer Evolution VI",
+    "manufacturer": "Mitsubishi",
+    "country": "Japan",
+    "year": 1999,
+    "class": "B",
+    "drivetrain": "AWD",
+    "rarity": "Common",
+    "source": "Autoshow"
+  }
+]

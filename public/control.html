@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>FH6 Random Car — Control Panel</title>
+<link rel="stylesheet" href="control.css" />
+</head>
+<body>
+  <h1>FH6 Random Car — Control Panel</h1>
+  <p class="hint">
+    Set which cars are eligible below, then click <strong>Save filters</strong>.
+    Any Channel Points redemption of your configured reward (or the manual
+    Spin button here) will pick randomly from cars matching these filters.
+    Leave a group empty to allow every option in that group.
+  </p>
+
+  <div class="grid">
+    <section>
+      <h2>Class</h2>
+      <div id="classes" class="chip-group"></div>
+    </section>
+
+    <section>
+      <h2>Drivetrain</h2>
+      <div id="drivetrains" class="chip-group"></div>
+    </section>
+
+    <section>
+      <h2>Country</h2>
+      <div id="countries" class="chip-group"></div>
+    </section>
+
+    <section>
+      <h2>Manufacturer</h2>
+      <div id="manufacturers" class="chip-group scrollable"></div>
+    </section>
+
+    <section>
+      <h2>Decade</h2>
+      <div id="decades" class="chip-group"></div>
+    </section>
+  </div>
+
+  <p class="hint">
+    Leave every group empty and hit Save to reset to "pick randomly, but
+    manufacturer-first" — a random manufacturer is chosen, then a random car
+    from that manufacturer, rather than any of 600+ cars uniformly.
+  </p>
+
+  <div class="actions">
+    <button id="saveBtn">Save filters</button>
+    <button id="spinBtn" class="spin">🎲 Spin now</button>
+    <span id="poolCount"></span>
+  </div>
+
+  <p class="hint">
+    Chat can also trigger spins directly, independent of the filters above:
+    <code>!changecar</code> (manufacturer-first random), or
+    <code>!changecar-&lt;word&gt;</code> where &lt;word&gt; is a manufacturer
+    (<code>!changecar-honda</code>), country (<code>!changecar-japan</code>),
+    class (<code>!changecar-s1</code>), drivetrain (<code>!changecar-rwd</code>),
+    or decade (<code>!changecar-90s</code>).
+  </p>
+
+  <script src="control.js"></script>
+</body>
+</html>

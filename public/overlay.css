@@ -1,0 +1,70 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent; /* important: keep OBS browser source transparent */
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+#card {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  min-width: 360px;
+  padding: 18px 26px;
+  background: linear-gradient(135deg, rgba(20,20,30,0.92), rgba(40,10,60,0.92));
+  border: 2px solid #9d4edd;
+  border-radius: 14px;
+  color: white;
+  box-shadow: 0 0 24px rgba(157, 78, 221, 0.6);
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+#card.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+#card.spinning #carName {
+  animation: flicker 0.08s infinite;
+}
+
+#redeemedBy {
+  font-size: 14px;
+  color: #d8b4fe;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#carName {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+#carMeta {
+  margin-top: 6px;
+  font-size: 15px;
+  color: #cfcfe8;
+}
+
+#empty {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  color: #ff6b6b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+@keyframes flicker {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}

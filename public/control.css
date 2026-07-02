@@ -1,0 +1,93 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #14141c;
+  color: #f0f0f5;
+  padding: 24px 32px 80px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+h1 { margin-bottom: 4px; }
+.hint { color: #a8a8c0; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+section h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9d4edd;
+  margin-bottom: 8px;
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-group.scrollable {
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #444;
+  background: #1f1f2b;
+  color: #ddd;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chip.active {
+  background: #9d4edd;
+  border-color: #9d4edd;
+  color: white;
+}
+
+.year-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.year-range input {
+  width: 100px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #1f1f2b;
+  color: white;
+}
+
+.actions {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#saveBtn { background: #3f3f52; color: white; }
+#spinBtn.spin { background: #9d4edd; color: white; }
+
+#poolCount { color: #a8a8c0; font-size: 13px; }

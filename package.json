@@ -1,0 +1,22 @@
+{
+  "name": "fh6-random-car",
+  "version": "1.0.0",
+  "description": "Twitch channel-points-triggered random car picker for Forza Horizon 6, with an OBS overlay and streamer control panel.",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "scrape": "node scripts/scrape_cars.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "tmi.js": "^1.8.5",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "cheerio": "^1.0.0"
+  }
+}
