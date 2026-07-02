@@ -88,8 +88,64 @@ function broadenPool(filters) {
   return { active, pool };
 }
 
+// Weighted by sqrt(manufacturer car count) rather than raw count — keeps big
+// manufacturers/countries somewhat favored without them dominating almost
+// every refresh, and gives niche ones a real (if smaller) shot.
+function sqrtWeightedSourceCar() {
+  const byManufacturer = new Map();
+  for (const car of cars) {
+    if (!car.manufacturer) continue;
+    if (!byManufacturer.has(car.manufacturer)) byManufacturer.set(car.manufacturer, []);
+    byManufacturer.get(car.manufacturer).push(car);
+  }
+
+  const weighted = [...byManufacturer.entries()].map(([manufacturer, list]) => ({
+    list,
+    weight: Math.sqrt(list.length),
+  }));
+  const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
+
+  let roll = Math.random() * totalWeight;
+  for (const { list, weight } of weighted) {
+    roll -= weight;
+    if (roll <= 0) return list[Math.floor(Math.random() * list.length)];
+  }
+  return weighted[weighted.length - 1].list[0];
+}
+
+const JACKPOT_CHANCE = 0.1; // 1-in-10 auto-reveals show one exact car instead of a category
+
+// Best-effort cleanup for a jackpot exact-car reveal — strips the year, a
+// duplicated manufacturer prefix, race-livery numbers, parenthetical
+// chassis/edition codes, and a short list of cosmetic edition words. Not
+// perfect on every entry (kudosprime's names are inconsistent), but turns
+// e.g. "2012 Nissan GT-R BLACK EDITION (R35)" into "Nissan GT-R".
+function cleanCarName(car) {
+  let s = car.name.replace(/^\d{4}\s+/, "");
+
+  if (car.manufacturer) {
+    const escaped = car.manufacturer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    s = s.replace(new RegExp(`^${escaped}\\s+`, "i"), "");
+  }
+
+  s = s.replace(/^#\d+\s+/, "");
+  s = s.replace(/\([^)]*\)/g, "");
+
+  const noiseWords = ["Forza Edition", "40th Anniversary", "Anniversary", "Black Edition"];
+  for (const word of noiseWords) {
+    s = s.replace(new RegExp(`\\b${word}\\b`, "gi"), "");
+  }
+
+  return `${car.manufacturer} ${s}`.replace(/\s+/g, " ").trim();
+}
+
 function computeRandomSpin() {
-  const sourceCar = cars[Math.floor(Math.random() * cars.length)];
+  if (Math.random() < JACKPOT_CHANCE) {
+    const jackpotCar = sqrtWeightedSourceCar();
+    return { label: cleanCarName(jackpotCar), poolSize: 1 };
+  }
+
+  const sourceCar = sqrtWeightedSourceCar();
   const sourceDecade = sourceCar.year ? Math.floor(sourceCar.year / 10) * 10 : null;
 
   const dimensionValues = {

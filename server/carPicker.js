@@ -160,6 +160,67 @@ function computeSpinResult(filters = {}) {
 }
 
 /**
+ * Picks a manufacturer weighted by the SQUARE ROOT of its car count (not the
+ * raw count) then a uniformly random car within it — used as the source car
+ * for computeRandomSpin. Raw-count weighting made big manufacturers/countries
+ * (Japan, USA, Ford...) come up almost every refresh; sqrt compresses that
+ * gap so niche ones surface regularly while big ones still have some edge.
+ */
+function sqrtWeightedSourceCar() {
+  const byManufacturer = new Map();
+  for (const car of cars) {
+    if (!car.manufacturer) continue;
+    if (!byManufacturer.has(car.manufacturer)) byManufacturer.set(car.manufacturer, []);
+    byManufacturer.get(car.manufacturer).push(car);
+  }
+
+  const weighted = [...byManufacturer.entries()].map(([manufacturer, list]) => ({
+    manufacturer,
+    list,
+    weight: Math.sqrt(list.length),
+  }));
+  const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
+
+  let roll = Math.random() * totalWeight;
+  for (const { list, weight } of weighted) {
+    roll -= weight;
+    if (roll <= 0) return list[Math.floor(Math.random() * list.length)];
+  }
+  return weighted[weighted.length - 1].list[0];
+}
+
+const JACKPOT_CHANCE = 0.1; // 1-in-10 auto-reveals show one exact car instead of a category
+
+/**
+ * Cleans up a scraped car name for a "jackpot" exact-car reveal — strips the
+ * leading year (tracked separately anyway), a duplicated manufacturer
+ * prefix, race-livery numbers ("#12"), parenthetical chassis/edition codes
+ * ("(R35)", "(BNR32 Gr. A)"), and a short list of cosmetic edition words.
+ * Best-effort, not perfect: kudosprime's names are inconsistent enough
+ * (livery sponsors, race class tags) that some variants still won't collapse
+ * down to an identical short name — e.g. distinct historical variants like
+ * "SKYLINE 2000GT-R" intentionally stay distinguishable from a modern GT-R.
+ */
+function cleanCarName(car) {
+  let s = car.name.replace(/^\d{4}\s+/, "");
+
+  if (car.manufacturer) {
+    const escaped = car.manufacturer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    s = s.replace(new RegExp(`^${escaped}\\s+`, "i"), "");
+  }
+
+  s = s.replace(/^#\d+\s+/, "");
+  s = s.replace(/\([^)]*\)/g, "");
+
+  const noiseWords = ["Forza Edition", "40th Anniversary", "Anniversary", "Black Edition"];
+  for (const word of noiseWords) {
+    s = s.replace(new RegExp(`\\b${word}\\b`, "gi"), "");
+  }
+
+  return `${car.manufacturer} ${s}`.replace(/\s+/g, " ").trim();
+}
+
+/**
  * Generates a fully random filter combo (0-2 random dimensions, e.g.
  * "decade + drivetrain" or "country + class" or just one manufacturer) for
  * the overlay's "refresh the page for something random" feature. Always
@@ -173,15 +234,20 @@ function computeSpinResult(filters = {}) {
  * redundant.
  *
  * Unlike computeSpinResult's equal-odds-per-manufacturer fallback, this
- * favors whichever values have more cars behind them — sampled by picking
- * one uniformly random CAR and reading its attributes off, rather than
- * picking uniformly among each dimension's unique values. A manufacturer
- * with 30 cars is proportionally more likely to come up than one with 1,
- * so a refresh is more likely to land on something with enough matches that
- * whoever's watching actually owns one (e.g. "Ford" over "Aston Martin").
+ * still favors whichever values have more cars behind them (so a refresh is
+ * more likely to land on something whoever's watching actually owns), just
+ * weighted by sqrt(count) via sqrtWeightedSourceCar rather than raw count.
+ *
+ * 1-in-10 of the time (JACKPOT_CHANCE), skips the category logic entirely
+ * and reveals one exact car instead, via cleanCarName.
  */
 function computeRandomSpin() {
-  const sourceCar = cars[Math.floor(Math.random() * cars.length)];
+  if (Math.random() < JACKPOT_CHANCE) {
+    const jackpotCar = sqrtWeightedSourceCar();
+    return { label: cleanCarName(jackpotCar), manufacturer: jackpotCar.manufacturer, poolSize: 1, narrowed: true, jackpot: true };
+  }
+
+  const sourceCar = sqrtWeightedSourceCar();
   const sourceDecade = sourceCar.year ? Math.floor(sourceCar.year / 10) * 10 : null;
 
   const dimensionValues = {
