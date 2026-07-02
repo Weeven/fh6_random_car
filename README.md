@@ -85,17 +85,26 @@ panel.
 
 ## How filtering works
 
-Every spin picks a random **manufacturer** — never a specific car model.
-The streamer picks whichever car of that manufacturer they want to drive
-in-game. Each filter group (class, drivetrain, manufacturer, country,
-region, decade) is OR'd internally and AND'd across groups — e.g. selecting
-`RWD` + `AWD` for drivetrain and `Japan` for country gives you any Japanese
-manufacturer with at least one car that's RWD *or* AWD.
+A spin never reveals a specific car model — it reveals exactly as much as
+the active filters pin down, and no more:
 
-**If every group is left empty**, every manufacturer in the game gets equal
-odds, regardless of how many cars they have. Without this, a manufacturer
-with 30 cars (e.g. Ford) would show up far more often than one with a
-single car (e.g. Volvo) — equal odds per manufacturer keeps things fair.
+- **No filters at all** — reveals a random manufacturer. Every manufacturer
+  gets equal odds regardless of how many cars they have in the game, so a
+  30-car manufacturer (e.g. Ford) doesn't drown out a 1-car one (e.g. Volvo).
+- **Exactly one filter** — shown as-is, however narrow. Filter to just
+  `Volvo` and it shows "Volvo", even though they only have 1 car — you
+  picked it on purpose.
+- **Two or more filters** — shown combined, e.g. `Nissan` + `Class A` shows
+  "Nissan · Class A". If that exact combination matches 2 or fewer cars, the
+  reveal automatically drops the most-specific filter in the combo and
+  rechecks, repeating until the pool is bigger than that (or only one filter
+  is left). E.g. `Nissan` + `Japan` + `Class D` might only match 0-1 cars, so
+  it'd back off to "Japan · Class D" instead.
+
+Each filter group (class, drivetrain, manufacturer, country, region, decade)
+is OR'd internally and AND'd across groups — e.g. selecting `RWD` + `AWD`
+for drivetrain and `Japan` for country matches anything Japanese that's RWD
+*or* AWD.
 
 ## Chat commands
 
@@ -110,12 +119,11 @@ type in chat:
 - `!changecar-rwd` — matches a drivetrain.
 - `!changecar-90s` — matches a decade.
 
-Every variant reveals a manufacturer only, same as the Spin button. Each
-command applies *only* the one filter it matched — it doesn't combine with
-the control panel's saved filters. If the word after the dash doesn't match
-anything, the bot (if `TWITCH_CHAT_REPLY=true`) replies saying so instead of
-silently failing. See `setup/twitch_setup.md` for how to connect the chat
-bot.
+Each command applies *only* the one filter it matched — it doesn't combine
+with the control panel's saved filters, and follows the same reveal rules
+above. If the word after the dash doesn't match anything, the bot (if
+`TWITCH_CHAT_REPLY=true`) replies saying so instead of silently failing. See
+`setup/twitch_setup.md` for how to connect the chat bot.
 
 ## Notes & limitations
 

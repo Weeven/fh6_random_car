@@ -1,9 +1,9 @@
 const tmi = require("tmi.js");
-const { pickRandomManufacturer, resolveCommandToken, isFilterEmpty } = require("./carPicker");
+const { computeSpinResult, resolveCommandToken, isFilterEmpty } = require("./carPicker");
 
 /**
  * Connects to Twitch chat and listens for:
- *   !changecar            -> no filter, any manufacturer
+ *   !changecar            -> no filter, reveals a random manufacturer
  *   !changecar-asia       -> matches region/continent "Asia"
  *   !changecar-japan      -> matches country "Japan"
  *   !changecar-honda      -> matches manufacturer "Honda"
@@ -11,9 +11,9 @@ const { pickRandomManufacturer, resolveCommandToken, isFilterEmpty } = require("
  *   !changecar-rwd        -> matches drivetrain "RWD"
  *   !changecar-90s        -> matches decade 1990s
  *
- * Every variant reveals a MANUFACTURER only (see pickRandomManufacturer in
+ * Every variant reveals exactly what was asked for (see computeSpinResult in
  * carPicker.js) — never a specific car model. The streamer picks whichever
- * car of that manufacturer they want in-game.
+ * matching car they want in-game.
  *
  * Chat-triggered spins are one-off: they use ONLY the filter parsed from the
  * command (ignoring whatever the streamer currently has set in the control
@@ -59,12 +59,11 @@ function connectTwitchChat({ botUsername, oauthToken, channel, onSpin, onStatus,
       }
     }
 
-    const result = pickRandomManufacturer(filters);
+    const result = computeSpinResult(filters);
     onSpin?.({ ...result, redeemedBy: tags["display-name"] || tags.username, matchedType, matchedValue });
 
     if (replyInChat) {
-      const name = result.manufacturer ? `${result.manufacturer} (${result.country})` : `no manufacturer matched "${token}"`;
-      client.say(chatChannel, `🎲 ${name}`).catch(() => {});
+      client.say(chatChannel, `🎲 ${result.label}`).catch(() => {});
     }
   });
 

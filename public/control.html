@@ -8,11 +8,12 @@
 <body>
   <h1>FH6 Random Car — Control Panel</h1>
   <p class="hint">
-    Set which cars are eligible below, then click <strong>Save filters</strong>.
-    Every spin picks a random <strong>manufacturer</strong> — not a specific
-    car model — from whatever matches these filters, so you pick which car of
-    that manufacturer to drive in-game. Leave a group empty to allow every
-    option in that group.
+    Pick filters below, then click <strong>Save filters</strong>. A spin
+    reveals exactly as much as you've filtered down to — never a specific car
+    model. Pick just Class C and it shows "Class C". Pick Nissan + Class A and
+    it shows "Nissan · Class A". You then pick whichever matching car you
+    want to drive in-game. If a combo you've picked matches too few cars, the
+    reveal automatically backs off to a slightly broader combo instead.
   </p>
 
   <div class="grid">
@@ -48,10 +49,10 @@
   </div>
 
   <p class="hint">
-    Leave every group empty and hit Save to reset to "any manufacturer" —
-    every eligible manufacturer gets equal odds, regardless of how many cars
-    they have in the game (so a 1-car manufacturer isn't drowned out by one
-    with 30, e.g. Ford).
+    Leave every group empty and hit Save to reset to "any manufacturer" — a
+    random manufacturer is revealed, with every manufacturer getting equal
+    odds regardless of how many cars they have in the game (so a 1-car
+    manufacturer isn't drowned out by one with 30, e.g. Ford).
   </p>
 
   <div class="actions">
@@ -67,8 +68,8 @@
     (<code>!changecar-asia</code>), country (<code>!changecar-japan</code>),
     manufacturer (<code>!changecar-honda</code>), class
     (<code>!changecar-s1</code>), drivetrain (<code>!changecar-rwd</code>),
-    or decade (<code>!changecar-90s</code>). Every variant reveals a
-    manufacturer only, same as the Spin button.
+    or decade (<code>!changecar-90s</code>). Each reveals exactly that one
+    thing, same rules as above.
   </p>
 
   <script src="control.js"></script>

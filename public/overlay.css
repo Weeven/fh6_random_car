@@ -48,12 +48,6 @@ html, body {
   font-weight: 700;
 }
 
-#carMeta {
-  margin-top: 6px;
-  font-size: 15px;
-  color: #cfcfe8;
-}
-
 #empty {
   position: absolute;
   bottom: 40px;

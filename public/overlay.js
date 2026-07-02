@@ -1,7 +1,6 @@
 const card = document.getElementById("card");
 const emptyEl = document.getElementById("empty");
 const carNameEl = document.getElementById("carName");
-const carMetaEl = document.getElementById("carMeta");
 const redeemedByEl = document.getElementById("redeemedBy");
 
 const SPIN_DURATION_MS = 1200;
@@ -20,10 +19,10 @@ function connect() {
   ws.onclose = () => setTimeout(connect, 3000);
 }
 
-function handleSpinResult({ manufacturer, country, region, poolSize, manufacturerCarCount, redeemedBy, matchedType, matchedValue }) {
+function handleSpinResult({ label, poolSize, redeemedBy }) {
   clearTimeout(hideTimer);
 
-  if (!manufacturer || poolSize === 0) {
+  if (!label || poolSize === 0) {
     card.classList.add("hidden");
     emptyEl.classList.remove("hidden");
     hideTimer = setTimeout(() => emptyEl.classList.add("hidden"), 4000);
@@ -31,11 +30,9 @@ function handleSpinResult({ manufacturer, country, region, poolSize, manufacture
   }
 
   emptyEl.classList.add("hidden");
-  const filterNote = matchedType ? ` (${matchedType}: ${matchedValue})` : "";
-  redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun for a new manufacturer!${filterNote}` : "New manufacturer!";
+  redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun!` : "New spin!";
   card.classList.remove("hidden");
   card.classList.add("show", "spinning");
-  carMetaEl.textContent = "";
 
   // Quick flicker animation before settling on the real result.
   let ticks = 0;
@@ -45,9 +42,7 @@ function handleSpinResult({ manufacturer, country, region, poolSize, manufacture
     if (ticks > SPIN_DURATION_MS / 80) {
       clearInterval(flickerInterval);
       card.classList.remove("spinning");
-      carNameEl.textContent = manufacturer;
-      const carWord = manufacturerCarCount === 1 ? "car" : "cars";
-      carMetaEl.textContent = `${country} · ${region} · ${manufacturerCarCount} ${carWord} to choose from`;
+      carNameEl.textContent = label;
     }
   }, 80);
 

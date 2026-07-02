@@ -64,33 +64,66 @@ function applyFilters(filters = {}) {
   });
 }
 
-/**
- * Picks a random MANUFACTURER (not a specific car model) from whatever pool
- * the given filters leave eligible. Every eligible manufacturer gets equal
- * odds, regardless of how many cars they have in the game — so a
- * single-car manufacturer like Volvo isn't drowned out by Ford's 30, but
- * also doesn't become a "celebrity" result by resolving to one exact car
- * every time. The streamer picks whichever car of that manufacturer they
- * want in-game.
- */
-function pickRandomManufacturer(filters = {}) {
-  const pool = isFilterEmpty(filters) ? cars : applyFilters(filters);
-  const manufacturers = [...new Set(pool.map((c) => c.manufacturer).filter(Boolean))];
+const FILTER_KEYS = ["manufacturers", "decades", "classes", "drivetrains", "countries", "regions"];
+// Order dropped in when a combo is too narrow — most-specific/most-narrowing first.
+const MIN_POOL_SIZE = 3;
 
-  if (manufacturers.length === 0) {
-    return { manufacturer: null, country: null, region: null, poolSize: 0, manufacturerCarCount: 0 };
+function activeFilterKeys(filters) {
+  return FILTER_KEYS.filter((key) => filters[key]?.length);
+}
+
+function labelForFilters(filters) {
+  const parts = [];
+  if (filters.regions?.length) parts.push(filters.regions.join("/"));
+  if (filters.countries?.length) parts.push(filters.countries.join("/"));
+  if (filters.manufacturers?.length) parts.push(filters.manufacturers.join("/"));
+  if (filters.classes?.length) parts.push(`Class ${filters.classes.join("/")}`);
+  if (filters.drivetrains?.length) parts.push(filters.drivetrains.join("/"));
+  if (filters.decades?.length) parts.push(filters.decades.map((d) => `${d}s`).join("/"));
+  return parts.join(" · ");
+}
+
+/**
+ * Reveals exactly as much as the active filters pin down — never a specific
+ * car model. The idea: only show what was actually asked for, and roll dice
+ * only for whatever wasn't specified.
+ *
+ *   no filters at all         -> roll a random manufacturer (equal odds each,
+ *                                 so a 1-car manufacturer like Volvo isn't
+ *                                 drowned out by Ford's 30, and isn't a
+ *                                 "celebrity result" either)
+ *   exactly one filter         -> show it as-is, however narrow (you picked
+ *                                 it on purpose, e.g. "Volvo" even if they
+ *                                 only have 1 car)
+ *   two or more filters        -> show them combined ("Nissan · Class A"),
+ *                                 UNLESS that combo matches 2 or fewer cars —
+ *                                 then drop the most-specific filter in the
+ *                                 combo and recheck, repeating until the pool
+ *                                 is bigger than that or only one filter is
+ *                                 left (e.g. "Class D" + "Japan" + "Nissan"
+ *                                 with ~1 match backs off to "Japan · Class D")
+ */
+function computeSpinResult(filters = {}) {
+  let active = { ...filters };
+  let pool = applyFilters(active);
+
+  while (pool.length < MIN_POOL_SIZE && activeFilterKeys(active).length >= 2) {
+    const keyToDrop = FILTER_KEYS.find((key) => active[key]?.length);
+    active = { ...active, [keyToDrop]: [] };
+    pool = applyFilters(active);
   }
 
-  const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
-  const manufacturerCars = pool.filter((c) => c.manufacturer === manufacturer);
-  const { country, region } = manufacturerCars[0];
+  if (isFilterEmpty(active)) {
+    const manufacturers = [...new Set(cars.map((c) => c.manufacturer).filter(Boolean))];
+    const manufacturer = manufacturers[Math.floor(Math.random() * manufacturers.length)];
+    return { label: manufacturer, manufacturer, poolSize: cars.length, narrowed: false };
+  }
 
   return {
-    manufacturer,
-    country,
-    region,
+    label: labelForFilters(active),
+    manufacturer: active.manufacturers?.length === 1 ? active.manufacturers[0] : null,
     poolSize: pool.length,
-    manufacturerCarCount: manufacturerCars.length,
+    narrowed: activeFilterKeys(active).length < activeFilterKeys(filters).length,
   };
 }
 
@@ -184,4 +217,4 @@ function resolveCommandToken(token) {
   return { filters: {}, matchedType: null };
 }
 
-module.exports = { loadCars, applyFilters, pickRandomManufacturer, getFacetOptions, resolveCommandToken, isFilterEmpty };
+module.exports = { loadCars, applyFilters, computeSpinResult, getFacetOptions, resolveCommandToken, isFilterEmpty };
