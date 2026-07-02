@@ -155,34 +155,44 @@ function computeSpinResult(filters = {}) {
  * down to a bigger pool (or all the way to a random manufacturer) if the
  * random combo turns out too narrow — there's no user intent to preserve
  * here, unlike computeSpinResult.
+ *
+ * Unlike computeSpinResult's equal-odds-per-manufacturer fallback, this
+ * favors whichever values have more cars behind them — sampled by picking
+ * one uniformly random CAR and reading its attributes off, rather than
+ * picking uniformly among each dimension's unique values. A manufacturer
+ * with 30 cars is proportionally more likely to come up than one with 1,
+ * so a refresh is more likely to land on something with enough matches that
+ * whoever's watching actually owns one (e.g. "Ford" over "Aston Martin").
  */
 function computeRandomSpin() {
-  const facets = getFacetOptions();
-  const facetsByKey = {
-    manufacturers: facets.manufacturers,
-    decades: facets.decades,
-    classes: facets.classes,
-    drivetrains: facets.drivetrains,
-    countries: facets.countries,
-    regions: facets.regions,
+  const sourceCar = cars[Math.floor(Math.random() * cars.length)];
+  const sourceDecade = sourceCar.year ? Math.floor(sourceCar.year / 10) * 10 : null;
+
+  const dimensionValues = {
+    manufacturers: sourceCar.manufacturer,
+    decades: sourceDecade,
+    classes: sourceCar.class,
+    drivetrains: sourceCar.drivetrain,
+    countries: sourceCar.country,
+    regions: sourceCar.region,
   };
 
-  const shuffledKeys = [...FILTER_KEYS];
-  for (let i = shuffledKeys.length - 1; i > 0; i--) {
+  const availableKeys = FILTER_KEYS.filter((key) => dimensionValues[key] != null);
+  for (let i = availableKeys.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffledKeys[i], shuffledKeys[j]] = [shuffledKeys[j], shuffledKeys[i]];
+    [availableKeys[i], availableKeys[j]] = [availableKeys[j], availableKeys[i]];
   }
 
   const dimensionCount = Math.floor(Math.random() * 3); // 0, 1, or 2 dimensions
   const filters = {};
-  for (const key of shuffledKeys.slice(0, dimensionCount)) {
-    const options = facetsByKey[key];
-    if (!options?.length) continue;
-    filters[key] = [options[Math.floor(Math.random() * options.length)]];
+  for (const key of availableKeys.slice(0, dimensionCount)) {
+    filters[key] = [dimensionValues[key]];
   }
 
   const { active, pool } = broadenPool(filters, { keepAtLeastOneFilter: false });
-  if (isFilterEmpty(active)) return randomManufacturerResult();
+  if (isFilterEmpty(active)) {
+    return { label: sourceCar.manufacturer, manufacturer: sourceCar.manufacturer, poolSize: cars.length, narrowed: false };
+  }
 
   return {
     label: labelForFilters(active),
