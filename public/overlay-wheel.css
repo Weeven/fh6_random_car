@@ -1,0 +1,88 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent; /* important: keep OBS browser source transparent */
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+#wheelWrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 480px;
+  height: 480px;
+}
+
+#wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 6px solid #e21a1a;
+  box-shadow: 0 0 30px rgba(226, 26, 26, 0.7), 0 0 0 4px rgba(0, 0, 0, 0.6);
+  background: #0f0f0f;
+}
+
+#pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 30px solid #e21a1a;
+  filter: drop-shadow(0 0 6px rgba(226, 26, 26, 0.8));
+  z-index: 2;
+}
+
+#card {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  min-width: 360px;
+  padding: 18px 26px;
+  background: linear-gradient(135deg, rgba(15,15,15,0.94), rgba(50,6,6,0.94));
+  border: 2px solid #e21a1a;
+  border-radius: 14px;
+  color: white;
+  box-shadow: 0 0 24px rgba(226, 26, 26, 0.6);
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+#card.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+#redeemedBy {
+  font-size: 14px;
+  color: #ff6b6b;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#carName {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+#empty {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  color: #ff3b3b;
+  font-size: 18px;
+  font-weight: 600;
+}
