@@ -120,9 +120,10 @@ async function handleSpinResult({ label, poolSize, redeemedBy }) {
   }
 
   emptyEl.classList.add("hidden");
-  wheelWrap.classList.remove("hidden");
-  card.classList.remove("show");
-  redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun!` : "New spin!";
+  wheelWrap.classList.remove("hidden", "faded");
+  card.classList.remove("hidden", "show");
+  redeemedByEl.textContent = redeemedBy ? `${redeemedBy} spun!` : "";
+  redeemedByEl.classList.toggle("hidden", !redeemedBy);
 
   const { labels, winningIndex } = await buildLabels(label);
   drawWheel(labels);
@@ -133,7 +134,10 @@ async function handleSpinResult({ label, poolSize, redeemedBy }) {
     canvas.removeEventListener("transitionend", onSpinEnd);
     carNameEl.textContent = label;
     card.classList.add("show");
-    hideTimer = setTimeout(() => card.classList.remove("show"), DISPLAY_DURATION_MS);
+    hideTimer = setTimeout(() => {
+      card.classList.remove("show");
+      wheelWrap.classList.add("faded");
+    }, DISPLAY_DURATION_MS);
   };
   canvas.addEventListener("transitionend", onSpinEnd);
 }
