@@ -1,18 +1,22 @@
 const tmi = require("tmi.js");
-const { computeSpinResult, resolveCommandToken, isFilterEmpty } = require("./carPicker");
+const { resolveCommandToken, resultForToken } = require("./carPicker");
 
 /**
  * Connects to Twitch chat and listens for:
- *   !changecar            -> no filter, reveals a random manufacturer
- *   !changecar-japan      -> matches country "Japan"
- *   !changecar-honda      -> matches manufacturer "Honda"
- *   !changecar-s1         -> matches class "S1"
- *   !changecar-rwd        -> matches drivetrain "RWD"
- *   !changecar-90s        -> matches decade 1990s
+ *   !changecar               -> no filter, reveals a random manufacturer
+ *   !changecar-japan         -> matches country "Japan"
+ *   !changecar-honda         -> matches manufacturer "Honda"
+ *   !changecar-s1            -> matches class "S1"
+ *   !changecar-rwd           -> matches drivetrain "RWD"
+ *   !changecar-90s           -> matches decade 1990s
+ *   !changecar-trackToys     -> matches division "Track Toys"
+ *   !changecar-touge         -> activity "Touge" (not a car filter — see
+ *                                resultForToken in carPicker.js)
  *
- * Every variant reveals exactly what was asked for (see computeSpinResult in
- * carPicker.js) — never a specific car model. The streamer picks whichever
- * matching car they want in-game.
+ * Every filter-based variant reveals exactly what was asked for (see
+ * computeSpinResult in carPicker.js) — never a specific car model. The
+ * streamer picks whichever matching car they want in-game. Activity words
+ * are the one exception: they reveal a fixed non-car activity instead.
  *
  * Chat-triggered spins are one-off: they use ONLY the filter parsed from the
  * command (ignoring whatever the streamer currently has set in the control
@@ -48,17 +52,17 @@ function connectTwitchChat({ botUsername, oauthToken, channel, onSpin, onStatus,
       matchedValue = resolved.matchedValue;
 
       if (!matchedType) {
-        onStatus?.(`"${token}" didn't match any country/manufacturer/class/drivetrain/decade`);
+        onStatus?.(`"${token}" didn't match any country/manufacturer/class/drivetrain/decade/division/activity`);
         if (replyInChat) {
           client
-            .say(chatChannel, `@${tags["display-name"] || tags.username} I don't recognize "${token}" — try a country, manufacturer, class (e.g. s1), drivetrain (rwd/fwd/awd), or decade (e.g. 90s).`)
+            .say(chatChannel, `@${tags["display-name"] || tags.username} I don't recognize "${token}" — try a country, manufacturer, class (e.g. s1), drivetrain (rwd/fwd/awd), decade (e.g. 90s), division (e.g. trackToys), or activity (e.g. touge, eliminator).`)
             .catch(() => {});
         }
         return;
       }
     }
 
-    const result = computeSpinResult(filters);
+    const result = resultForToken({ filters, matchedType, matchedValue });
     onSpin?.({ ...result, redeemedBy: tags["display-name"] || tags.username, matchedType, matchedValue });
 
     if (replyInChat) {

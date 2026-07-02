@@ -224,6 +224,24 @@ function cleanCarName(car) {
   return `${car.manufacturer} ${s}`.replace(/\s+/g, " ").trim();
 }
 
+// Fixed pool of non-car activities — FH6 race types plus a few extra
+// Horizon activities the streamer wanted in the mix. Unlike Division, these
+// aren't a car attribute (no car "belongs to" a Touge race), so they can't
+// be filtered/combined the way manufacturer/division/etc. are — they're a
+// standalone reveal type, same idea as the exact-car jackpot below.
+const ACTIVITIES = [
+  "Street Race",
+  "Road Race",
+  "Touge",
+  "Drag Race",
+  "Dirt Race",
+  "Cross-Country",
+  "Car Meet",
+  "Eliminator",
+  "Head-to-Head Battle",
+];
+const ACTIVITY_CHANCE = 0.1; // 1-in-10 auto-reveals show an activity instead of a car category
+
 /**
  * Generates a fully random filter combo (0-2 random dimensions, e.g.
  * "decade + drivetrain" or "country + class" or just one manufacturer) for
@@ -243,12 +261,18 @@ function cleanCarName(car) {
  * weighted by sqrt(count) via sqrtWeightedSourceCar rather than raw count.
  *
  * 1-in-10 of the time (JACKPOT_CHANCE), skips the category logic entirely
- * and reveals one exact car instead, via cleanCarName.
+ * and reveals one exact car instead, via cleanCarName. Independently,
+ * another 1-in-10 (ACTIVITY_CHANCE) reveals a non-car activity instead.
  */
 function computeRandomSpin() {
   if (Math.random() < JACKPOT_CHANCE) {
     const jackpotCar = sqrtWeightedSourceCar();
     return { label: cleanCarName(jackpotCar), manufacturer: jackpotCar.manufacturer, poolSize: 1, narrowed: true, jackpot: true };
+  }
+
+  if (Math.random() < ACTIVITY_CHANCE) {
+    const activity = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
+    return { label: activity, poolSize: 1, narrowed: true, activity: true };
   }
 
   const sourceCar = sqrtWeightedSourceCar();
@@ -409,7 +433,28 @@ function resolveCommandToken(token) {
     return { filters: { divisions: [divisionMatch] }, matchedType: "division", matchedValue: divisionMatch };
   }
 
+  // Activity, e.g. "touge", "carmeet", "eliminator", "headtoheadbattle" —
+  // not a car filter, so it's returned via matchedType only (see
+  // resultForToken) rather than a `filters` shape applyFilters understands.
+  const activityMatch = ACTIVITIES.find((a) => normalizeToken(a) === norm);
+  if (activityMatch) {
+    return { filters: {}, matchedType: "activity", matchedValue: activityMatch };
+  }
+
   return { filters: {}, matchedType: null };
+}
+
+/**
+ * Turns a resolveCommandToken()/resolveChangeCarTitle() result into an
+ * actual spin result — used by both the chat bot and Channel Points
+ * redemption handler so activity matches (which aren't a car filter) are
+ * handled the same way in both places instead of duplicating this branch.
+ */
+function resultForToken({ filters, matchedType, matchedValue } = {}) {
+  if (matchedType === "activity") {
+    return { label: matchedValue, poolSize: 1, narrowed: true, activity: true };
+  }
+  return computeSpinResult(filters || {});
 }
 
 // Matches Channel Points reward titles like "Change Car", "Change Car:",
@@ -444,5 +489,6 @@ module.exports = {
   getFacetOptions,
   resolveCommandToken,
   resolveChangeCarTitle,
+  resultForToken,
   isFilterEmpty,
 };

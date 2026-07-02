@@ -142,10 +142,31 @@ function cleanCarName(car) {
   return `${car.manufacturer} ${s}`.replace(/\s+/g, " ").trim();
 }
 
+// Fixed pool of non-car activities — same idea as ACTIVITIES in
+// server/carPicker.js. Not a car attribute, so it's a standalone reveal
+// type rather than something combinable with manufacturer/division/etc.
+const ACTIVITIES = [
+  "Street Race",
+  "Road Race",
+  "Touge",
+  "Drag Race",
+  "Dirt Race",
+  "Cross-Country",
+  "Car Meet",
+  "Eliminator",
+  "Head-to-Head Battle",
+];
+const ACTIVITY_CHANCE = 0.1; // 1-in-10 auto-reveals show an activity instead of a car category
+
 function computeRandomSpin() {
   if (Math.random() < JACKPOT_CHANCE) {
     const jackpotCar = sqrtWeightedSourceCar();
     return { label: cleanCarName(jackpotCar), poolSize: 1 };
+  }
+
+  if (Math.random() < ACTIVITY_CHANCE) {
+    const activity = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
+    return { label: activity, poolSize: 1 };
   }
 
   const sourceCar = sqrtWeightedSourceCar();

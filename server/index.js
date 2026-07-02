@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const { WebSocketServer } = require("ws");
 
-const { computeSpinResult, computeRandomSpin, sampleRandomLabels, getFacetOptions, resolveChangeCarTitle } = require("./carPicker");
+const { computeSpinResult, computeRandomSpin, sampleRandomLabels, getFacetOptions, resolveChangeCarTitle, resultForToken } = require("./carPicker");
 const { getFilters, setFilters } = require("./state");
 const { connectTwitchEventSub } = require("./twitchEventSub");
 const { connectTwitchChat } = require("./twitchChat");
@@ -109,7 +109,7 @@ if (TWITCH_CLIENT_ID && TWITCH_USER_ACCESS_TOKEN && TWITCH_BROADCASTER_ID) {
         );
       }
       console.log(`[Twitch] Redemption by ${event.user_name}: ${event.reward.title}`);
-      const result = computeSpinResult(resolved.filters);
+      const result = resultForToken(resolved);
       broadcastToOverlay({ ...result, redeemedBy: event.user_name });
     },
   });
