@@ -16,11 +16,11 @@ html, body {
   left: 40px;
   min-width: 360px;
   padding: 18px 26px;
-  background: linear-gradient(135deg, rgba(20,20,30,0.92), rgba(40,10,60,0.92));
-  border: 2px solid #9d4edd;
+  background: linear-gradient(135deg, rgba(15,15,15,0.94), rgba(50,6,6,0.94));
+  border: 2px solid #e21a1a;
   border-radius: 14px;
   color: white;
-  box-shadow: 0 0 24px rgba(157, 78, 221, 0.6);
+  box-shadow: 0 0 24px rgba(226, 26, 26, 0.6);
   transform: translateY(20px) scale(0.95);
   opacity: 0;
   transition: transform 0.35s ease, opacity 0.35s ease;
@@ -37,7 +37,7 @@ html, body {
 
 #redeemedBy {
   font-size: 14px;
-  color: #d8b4fe;
+  color: #ff6b6b;
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -52,7 +52,7 @@ html, body {
   position: absolute;
   bottom: 40px;
   left: 40px;
-  color: #ff6b6b;
+  color: #ff3b3b;
   font-size: 18px;
   font-weight: 600;
 }
